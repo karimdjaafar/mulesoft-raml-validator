@@ -1,0 +1,95 @@
+mulesoft-raml-validator
+Copyright (c) 2026 Karim DJAAFAR — Jasmine Conseil
+
+This product includes software developed by Karim DJAAFAR and Jasmine Conseil
+(https://www.jasmineconseil.com).
+
+Licensed under the Apache License, Version 2.0 (the "License"); you may not
+use this software except in compliance with the License. You may obtain a
+copy of the License at:
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+License for the specific language governing permissions and limitations
+under the License.
+
+═══════════════════════════════════════════════════════════════════════════════
+
+ATTRIBUTION REQUIREMENTS
+
+In accordance with section 4(d) of the Apache License, Version 2.0:
+
+When you redistribute this software, in source or binary form, with or without
+modification, you must retain the following attribution in any documentation,
+"About" dialog, splash screen, or equivalent visible location accompanying the
+redistribution:
+
+    "Powered by mulesoft-raml-validator
+     © 2026 Karim DJAAFAR — Jasmine Conseil
+     https://github.com/karim-djaafar/mulesoft-raml-validator"
+
+For derivative works (forks, modifications, integrations), you must additionally:
+
+  1. Preserve all copyright notices in the SKILL.md header, NOTICE file, and
+     LICENSE file.
+  2. Include a prominent notice in your derivative work indicating that you
+     have modified the original software, the date of modification, and a
+     pointer to your fork's source code.
+  3. Not use the names "Jasmine Conseil", "Karim DJAAFAR", or any trademark
+     associated with them to endorse or promote your derivative work without
+     prior written permission. The Apache 2.0 trademark clause (§6) applies.
+
+═══════════════════════════════════════════════════════════════════════════════
+
+THIRD-PARTY COMPONENTS
+
+This software depends on the following third-party components, each subject
+to their own licenses:
+
+  • PyYAML — MIT License
+    Copyright (c) 2017–2024 Ingy döt Net
+    Copyright (c) 2006–2016 Kirill Simonov
+    https://pyyaml.org/
+
+  • Python Standard Library — PSF License v2
+    Copyright (c) 2001–2026 Python Software Foundation
+    https://www.python.org/
+
+═══════════════════════════════════════════════════════════════════════════════
+
+ENTERPRISE EDITION
+
+A separate Enterprise Edition of this skill is distributed by Jasmine Conseil
+under a commercial license. The Enterprise Edition is NOT covered by the
+Apache License 2.0 and is governed by a separate End User License Agreement.
+
+The Enterprise Edition includes additional features (sector-specific rules,
+branded reports, CI/CD integration, priority support) and is available from:
+
+    contact@jasmineconseil.com
+    https://www.jasmineconseil.com
+
+The Apache 2.0 license of the Community Edition does not extend to, and may
+not be used to claim rights over, the Enterprise Edition.
+
+═══════════════════════════════════════════════════════════════════════════════
+
+DISCLAIMER
+
+This software audits MuleSoft RAML specifications against best practices but
+does NOT guarantee compliance with any specific MuleSoft certification, audit
+framework, or contractual requirement. Production deployment decisions remain
+the sole responsibility of the user. The authors and Jasmine Conseil disclaim
+all liability for any loss or damage arising from the use of this software.
+
+"MuleSoft", "Anypoint Platform", "MCPA", and related names are trademarks of
+MuleSoft LLC and/or Salesforce, Inc. This project is independent and is not
+endorsed by, sponsored by, or affiliated with MuleSoft LLC or Salesforce, Inc.
+
+"Claude" is a trademark of Anthropic, PBC. This project is an independent
+skill and is not endorsed by, sponsored by, or affiliated with Anthropic.
+
+═══════════════════════════════════════════════════════════════════════════════

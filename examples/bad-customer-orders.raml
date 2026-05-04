@@ -1,0 +1,73 @@
+#%RAML 1.0
+title: customerOrderAPI
+version: v1.2.3
+baseUri: https://api.jasmine-conseil.com/customer-orders
+mediaType: application/json
+
+description: API for orders.
+
+/customerOrders:
+  get:
+    queryParameters:
+      sort_by:
+        type: string
+      page:
+        type: integer
+      pageSize:
+        type: integer
+    responses:
+      200:
+        body:
+          application/json:
+            type: array
+  post:
+    body:
+      application/json:
+        type: object
+    responses:
+      201:
+        body:
+          application/json:
+            type: object
+
+  /{orderId}:
+    get:
+      responses:
+        200:
+          body:
+            application/json:
+              type: object
+
+/payment-process:
+  post:
+    body:
+      application/json:
+        type: object
+    responses:
+      200:
+        body:
+          application/json:
+            type: object
+
+/users:
+  get:
+    queryParameters:
+      page:
+        type: integer
+      pageSize:
+        type: integer
+    responses:
+      200:
+        body:
+          application/json:
+            type: array
+  /{userId}/password:
+    put:
+      body:
+        application/json:
+          type: object
+      responses:
+        200:
+          body:
+            application/json:
+              type: object
