@@ -167,7 +167,7 @@ Traps already met:
   `--footer-navy` at the top of each template), Calibri, footer
   © 2026 Jasmine Conseil. Severity colours (`--sev-*`) stay semantic.
 - The logo is embedded as a PNG data URI so the page stays one self-contained
-  file; the source image is `assets/logo.png`.
+  file; the source image is the logo shown at the top of the README.
 - Deliverables stay in **English** (§3bis of `SKILL.md`).
 
 ## 5. Languages — bilingual generation (EN / FR)

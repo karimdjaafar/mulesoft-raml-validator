@@ -140,7 +140,7 @@ mulesoft-raml-validator/                 # repository = plugin
 │   └── examples/                        # regression fixtures + reference demo (examples/demo/)
 ├── docs/DEVELOPER-GUIDE.md · docs/ACCEPTANCE-TESTS.md · docs/images/
 ├── README.md · INSTALL.md · UPGRADE.md · CHANGELOG.md · RELEASE-NOTES-1.5.0.md
-├── LICENSE · NOTICE · SECURITY.md · CONTRIBUTING.md · assets/logo.png
+├── LICENSE · NOTICE · SECURITY.md · CONTRIBUTING.md · assets/ (logo)
 └── .github/                             # issue templates, acceptance workflow (Ubuntu, macOS, Windows)
 ```
 

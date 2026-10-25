@@ -1,5 +1,4 @@
-# PowerShell completion for raml-validator — load with:
-#   raml-validator completion powershell | Out-String | Invoke-Expression
+# PowerShell completion for raml-validator — how to load it: see INSTALL.md
 Register-ArgumentCompleter -Native -CommandName 'raml-validator', 'raml-validator.cmd' -ScriptBlock {
     param($wordToComplete, $commandAst, $cursorPosition)
 

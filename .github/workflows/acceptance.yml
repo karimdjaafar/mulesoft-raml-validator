@@ -27,7 +27,7 @@ jobs:
           python-version: ${{ matrix.python }}
       - name: 1. Clean start
         run: |
-          echo "$PWD/bin" >> "$GITHUB_PATH"
+          echo "${{ github.workspace }}/skills/mulesoft-raml-validator/bin" >> "$GITHUB_PATH"
           bin/raml-validator --version
           ../../bin/raml-validator --version
       - name: 2. Automatic installation and install check
@@ -78,7 +78,7 @@ jobs:
           python-version: ${{ matrix.python }}
       - name: 1. Clean start
         run: |
-          "$PWD\bin" | Out-File -FilePath $env:GITHUB_PATH -Append -Encoding utf8
+          "${{ github.workspace }}\skills\mulesoft-raml-validator\bin" | Out-File -FilePath $env:GITHUB_PATH -Append -Encoding utf8
           bin\raml-validator.cmd --version
       - name: 2. Automatic installation and install check
         run: |

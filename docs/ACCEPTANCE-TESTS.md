@@ -19,7 +19,7 @@ expected result; the release is accepted when all 8 steps match.
 ```bash
 cd /path/to/mulesoft-raml-validator/skills/mulesoft-raml-validator
 rm -rf .venv
-export PATH="$PWD/bin:$PATH"
+export PATH="/path/to/mulesoft-raml-validator/skills/mulesoft-raml-validator/bin:$PATH"
 autoload -Uz compinit && compinit
 eval "$(raml-validator completion zsh)"
 raml-validator --version
@@ -31,7 +31,7 @@ and use `completion bash`. On **Windows (PowerShell)**:
 ```powershell
 cd C:\path\to\mulesoft-raml-validator\skills\mulesoft-raml-validator
 Remove-Item -Recurse -Force .venv -ErrorAction SilentlyContinue
-$env:Path = "$PWD\bin;$env:Path"
+$env:Path = "C:\path\to\mulesoft-raml-validator\skills\mulesoft-raml-validator\bin;" + $env:Path
 raml-validator completion powershell | Out-String | Invoke-Expression
 raml-validator --version
 ```
@@ -143,7 +143,7 @@ Results observed on the tester's machine, filled in as the run goes.
 | 1. Clean start | ✅ pass | `mulesoft-raml-validator v1.5.0` |
 | 2. Automatic installation | ✅ pass | `.venv` created from scratch (after `rm -rf .venv`); `verify` → `VERDICT — v1.5.0 FULLY DEPLOYED`, 7/7 checks (31 files; broken fixture 17 findings / 21 NO-GO; clean fixture 0 / 100 GO; round-trip 100/100 GO; demo 16 findings / 26 → 100 GO), exit code `0`; `setup` then answers at once: `✔ Python environment ready: …/mulesoft-raml-validator/.venv`. |
 | 3. Tab completion | ✅ pass — **finding fixed** | `--lang ` + Tab → `en  fr` ✅. Enter instead of Tab after `--lang` gives the expected argparse message `argument --lang: expected one argument` (no crash). Enter pressed instead of Tab on `raml-validator run examples/demo/`: the folder crashed `audit_raml.py` with a Python traceback (`IsADirectoryError`). **Fixed**: `ERROR: not a file: examples/demo — give the path of a .raml file`, exit `3`; case added to step 8 and to the CI. Tab on `raml-validator run examples/demo/leave-management-api` → `leave-management-api-best-practices.raml  leave-management-api.raml` (`.raml` only) ✅. Earlier:  `raml-validator ` + Tab → audit, completion, fix, run, setup, verify, each with its description ✅ |
-| 4. Demo in English | ✅ pass — **finding fixed and re-checked** | Footer: Project · Developer guide · Feedback · Contact: kdjaafar@jasmineconseil.com (link `mailto:…?subject=RAML Validator`), © 2026 Jasmine Conseil ✅; detailed findings with severity pills and remediation snippets ✅.  Re-check after the fix: base URI `https://api.demo.jasmineconseil.com/leaves` on one line ✅.  Report (Safari/Chrome): logo and project name in the header band, "by Jasmine CONSEIL", v1.5.0, verdict NO-GO, "API under audit" with description, version pill, "Layer not declared", 6 operations ✅. Finding: the base URI wrapped in the middle of a word ("…/lea ves") — **fixed**, the base URI now spans two columns (report and guide, EN and FR). Colours checked on screen (Terminal.app): step titles orange, NO-GO red, GO green, file bullets orange, "Files in" dimmed.  Audit `NO-GO — score 26/100, 16 findings` (2 blockers, 8 majors, 2 minors, 4 info); refactor: 15 transformations (9 mechanical, 6 heuristic), 6 to review; after fix `GO — score 100/100, 0 findings`; 4 files listed in `~/recette-raml`. |
+| 4. Demo in English | ✅ pass — **finding fixed and re-checked** | Footer: Project · Developer guide · Feedback · Contact: kdjaafar@jasmineconseil.com (link `mailto:…?subject=RAML Validator`), © 2026 Jasmine Conseil ✅; detailed findings with severity pills and remediation snippets ✅.  Re-check after the fix: base URI the base URI on one line ✅.  Report (Safari/Chrome): logo and project name in the header band, "by Jasmine CONSEIL", v1.5.0, verdict NO-GO, "API under audit" with description, version pill, "Layer not declared", 6 operations ✅. Finding: the base URI wrapped in the middle of a word ("…/lea ves") — **fixed**, the base URI now spans two columns (report and guide, EN and FR). Colours checked on screen (Terminal.app): step titles orange, NO-GO red, GO green, file bullets orange, "Files in" dimmed.  Audit `NO-GO — score 26/100, 16 findings` (2 blockers, 8 majors, 2 minors, 4 info); refactor: 15 transformations (9 mechanical, 6 heuristic), 6 to review; after fix `GO — score 100/100, 0 findings`; 4 files listed in `~/recette-raml`. |
 | 5. Demo in French | ✅ pass — **findings fixed** | French audit report: "Rapport d'audit RAML", "API auditée" with "(description traduite)", "Couche non déclarée", "Constats par catégorie et gravité", 2 bloquant(s), 8 majeur(s) ✅ (operation descriptions quoted from the spec stay in their original language).  Findings in the French guide (MD and HTML): 8 before / after summaries still in English ("6 resources without description", "placeholder examples added to 1 request bodies"…), and next steps pointing to `scripts/audit_raml.py`. **Fixed**: summaries translated ("6 ressources sans description", "exemples provisoires ajoutés à 1 corps de requête"…), guides point to `raml-validator audit`. Before the fix: Remediation guide: header "pour MuleSoft · connectivité API-Led", "par Jasmine CONSEIL"; "API auditée" with the French description and "(description traduite)"; "Couche non déclarée", "aucune déclarée"; "Transformations appliquées": 15, audit initial 16 constats / 26/100; MÉCANIQUE 9, HEURISTIQUE 6 ✅. |
 | 6. Clean specification | ⏳ to run | |
 | 7. No colours | ⏳ to run | |

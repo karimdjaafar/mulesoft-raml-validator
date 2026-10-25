@@ -1,4 +1,4 @@
-# bash completion for raml-validator — load with:  eval "$(raml-validator completion bash)"
+# bash completion for raml-validator — how to load it: see INSTALL.md
 _raml_validator() {
   local cur prev cmd
   cur="${COMP_WORDS[COMP_CWORD]}"

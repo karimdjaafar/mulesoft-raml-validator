@@ -1,5 +1,5 @@
 #compdef raml-validator
-# zsh completion for raml-validator — load with:  eval "$(raml-validator completion zsh)"
+# zsh completion for raml-validator — how to load it: see INSTALL.md
 _raml_validator() {
   local -a cmds
   cmds=(

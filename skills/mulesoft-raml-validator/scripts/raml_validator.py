@@ -17,9 +17,8 @@ Usage:
   verify  install check and regression suite
   setup   create the private Python environment (.venv) with PyYAML and
           Jinja2 — done automatically the first time a command needs it
-  completion  print the shell completion script (zsh, bash or powershell), e.g.
-              eval "$(raml-validator completion zsh)"
-              raml-validator completion powershell | Out-String | Invoke-Expression
+  completion  print the shell completion script (zsh, bash or powershell)
+              (how to load it in each shell: INSTALL.md)
 
 Output is coloured on a terminal; --no-color or the NO_COLOR variable turns
 colours off (they are off anyway when the output is piped).
