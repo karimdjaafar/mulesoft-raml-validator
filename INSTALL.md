@@ -27,11 +27,11 @@ pass on it; other versions are expected to work but are not guaranteed.
 
 | Platform | Shell | Python | Status |
 |---|---|---|---|
-| macOS 26 Tahoe | zsh | Homebrew `python3` | in qualification (manual run) |
-| macOS 15 (GitHub runner) | bash, zsh | 3.9, 3.12, 3.13 | qualified when the `acceptance` workflow passes |
+| macOS 26 Tahoe | zsh | Homebrew `python3` (3.15) | ✅ qualified — manual run, steps 1–5 (6–8 covered by the runners) |
+| macOS 15 (GitHub runner) | bash, zsh | 3.9, 3.12, 3.13 | ✅ qualified — `acceptance` run #1 (commit e705b0e) |
 | Ubuntu 24.04 LTS | bash 5.2 | 3.12 (distribution) | ✅ qualified — 8/8 (manual run) |
-| Ubuntu 24.04 (GitHub runner) | bash | 3.9, 3.12, 3.13 | qualified when the `acceptance` workflow passes |
-| Windows Server 2022 (GitHub runner) | PowerShell 7 | 3.9, 3.12, 3.13 | qualified when the `acceptance` workflow passes; no manual run yet |
+| Ubuntu 24.04 (GitHub runner) | bash | 3.9, 3.12, 3.13 | ✅ qualified — `acceptance` run #1 (commit e705b0e) |
+| Windows Server 2022 (GitHub runner) | PowerShell 7 | 3.9, 3.12, 3.13 | ✅ qualified — `acceptance` run #1 (commit e705b0e); no manual run yet |
 
 The `acceptance` workflow (`.github/workflows/acceptance.yml`) runs the
 automated part of the acceptance tests on every push. Its result is the

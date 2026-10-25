@@ -130,7 +130,8 @@ examples/demo/<name>.raml` then `3`; then a refusal
 
 | Version | Date | Machine | Tester | Result |
 |---|---|---|---|---|
-| 1.5.0 | 2026-10-25 | Mac mini (macOS Tahoe, zsh) | Karim DJAAFAR | in progress |
+| 1.5.0 | 2026-10-25 | Mac mini (macOS Tahoe, zsh) | Karim DJAAFAR | ✅ steps 1–5 (3 findings fixed); 6–8 by CI |
+| 1.5.0 | 2026-10-25 | GitHub Actions: Ubuntu 24.04, macOS 15, Windows Server 2022 × Python 3.9 / 3.12 / 3.13 | acceptance run #1 | ✅ success |
 | 1.5.0 | 2026-10-25 | Ubuntu 24.04.4 LTS (bash 5.2.21, Python 3.12.3) | Claude (clean container) | ✅ 8/8 |
 
 ### Run of 2026-10-25 — Mac mini (macOS Tahoe, zsh), v1.5.0
@@ -177,6 +178,11 @@ Run by Claude in a clean Ubuntu container, with the distribution's Python
 | 6. Clean specification | ✅ pass | GO — score 100/100, 0 findings |
 | 7. No colours | ✅ pass | 0 colour codes with `--no-color` (terminal) and when piped |
 | 8. Error cases | ✅ pass | `ERROR: file not found: missing.raml`, exit `3`; `invalid choice: 'de' (choose from 'en', 'fr')` |
+
+### GitHub Actions — `acceptance` run #1, 2026-10-25
+
+Commit `e705b0e` (v1.5.0): **success** in 1 min 16 s — Ubuntu 24.04, macOS 15
+and Windows Server 2022, each with Python 3.9, 3.12 and 3.13.
 
 ### Plugin validation — 2026-10-25
 
