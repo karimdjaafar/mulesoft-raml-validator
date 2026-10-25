@@ -4,7 +4,7 @@
 
 | Document | Version | Date | Author | Status |
 |---|---|---|---|---|
-| Developer guide — mulesoft-raml-validator | 1.4.2 | 2026-10-25 | Karim DJAAFAR — Jasmine Conseil | Released |
+| Developer guide — mulesoft-raml-validator | 1.5.0 | 2026-10-25 | Karim DJAAFAR — Jasmine Conseil | Released |
 
 For people who change the skill: add or fix a rule, extend the generator, change
 a report, or cut a release. To *use* the skill, read the [README](../README.md).
@@ -13,10 +13,20 @@ a report, or cut a release. To *use* the skill, read the [README](../README.md).
 
 ## 1. Architecture
 
-The skill is a chain of four scripts joined by two JSON files. Claude runs them
-and adds a semantic review; each script also runs on its own.
+**Layout.** The repository is a Claude plugin: `.claude-plugin/plugin.json` at
+the root, the skill in `skills/mulesoft-raml-validator/`, and `bin/` at the root
+with thin launchers that call the skill's own `bin/`. **Paths in this guide are
+relative to the skill folder** unless they start with the repository root
+(`docs/`, `.claude-plugin/`, `.github/`).
+
+Everything goes through **one command, `raml-validator`** (`bin/raml-validator`
+→ `scripts/raml_validator.py`). It chains four scripts joined by two JSON
+files; Claude runs it and adds a semantic review. The scripts stay callable on
+their own for debugging, but nobody has to chain them by hand.
 
 ```
+raml-validator run spec.raml --out-dir DIR [--lang fr] [--api-description "…"]
+
 spec.raml ──audit_raml.py──▶ findings.json ──render_report.py──▶ report.html
     │                             │
     └──── generate_best_practices.py ──▶ spec-best-practices.raml + transformations.json
@@ -27,6 +37,12 @@ spec.raml ──audit_raml.py──▶ findings.json ──render_report.py─�
 | File | Role |
 |---|---|
 | `SKILL.md` | What Claude reads: the 23 rules (§2), output contract (§3), workflow (§5), anti-patterns (§6). The rule catalog's source of truth. |
+| `bin/raml-validator` | Shell launcher (macOS, Linux). Python used, in order: `$RAML_VALIDATOR_PYTHON`, the repository's `.venv/bin/python`, `python3`. Put `bin/` on the `PATH`. |
+| `.venv/` | Private Python environment with PyYAML and Jinja2, created by `raml-validator setup` or on first use; ignored by git. |
+| `scripts/raml_validator.py` | The command: `audit`, `fix`, `run`, `verify`, `setup`, `completion zsh\|bash\|powershell`, `--version`; options `--out-dir`, `--lang`, `--api-description`, `--no-color`. Names outputs after the spec, prints a coloured summary. Calls the scripts below with `subprocess`; it never reimplements them. |
+| `bin/raml-validator.cmd` | Windows launcher (cmd, PowerShell): `%RAML_VALIDATOR_PYTHON%`, `.venv\Scripts\python.exe`, then `python` or `py`. |
+| `completions/_raml-validator`, `completions/raml-validator.bash`, `completions/raml-validator.ps1` | Tab completion for zsh, bash and PowerShell, printed by `raml-validator completion …`. |
+| `.github/workflows/acceptance.yml` | Acceptance tests on Ubuntu, macOS and Windows, Python 3.9 / 3.12 / 3.13, on every push. |
 | `scripts/version.py` | The only place the version is written. Every script imports it. |
 | `scripts/audit_raml.py` | Parses RAML with PyYAML, runs the checks, scores, writes `findings.json`. |
 | `scripts/render_report.py` | `findings.json` → HTML report (`templates/report.html.j2`): API under audit, findings matrix, detailed findings, links to the project, this guide and feedback. `--lang fr` for French. |
@@ -51,7 +67,7 @@ package.
   "subtitle": "MuleSoft RAML 1.0 production-readiness audit",
   "spec_path": "leave-management-api.raml",
   "date": "2026-10-25",
-  "skill_version": "mulesoft-raml-validator v1.4.2",
+  "skill_version": "mulesoft-raml-validator v1.5.0",
   "score": 21,
   "verdict": "NO-GO",
   "findings": [
@@ -82,7 +98,7 @@ package.
 - A finding carries `remediation_code` or `remediation_text`.
 - **Score**: `100 − 15·BLOCKER − 5·MAJOR − 2·MINOR`, floor 0 (`PENALTY` in
   `audit_raml.py`). **Verdict** `GO` only if score ≥ 80 and no BLOCKER.
-- `api` (added in 1.4.2, built by `api_profile`) describes the API under audit
+- `api` (added in 1.5.0, built by `api_profile`) describes the API under audit
   exactly as declared in the spec; the report shows it in the *API under audit*
   section. Only the layer is derived (from the title prefix, `unknown` without
   one). Findings files without `api` still render, without that section.
@@ -161,12 +177,14 @@ French on request**. The option is given on the command line, at generation
 time:
 
 ```bash
-python scripts/render_report.py --findings findings.json --out report.html                 # English (default)
-python scripts/render_report.py --findings findings.json --out report.fr.html --lang fr    # French
-
-python scripts/render_remediation_guide.py --transformations transformations.json \
-  --findings findings.json --out-md guide.fr.md --out-html guide.fr.html --lang fr
+raml-validator run my-api.raml --out-dir reports/              # English (default)
+raml-validator run my-api.raml --out-dir reports/ --lang fr    # French: audit report and guide
+raml-validator run my-api.raml --lang fr --api-description "Description traduite…"
 ```
+
+The command passes `--lang` (and `--api-description`) to both renderers,
+`render_report.py` and `render_remediation_guide.py`, which accept the same
+options when called directly.
 
 | Rule | Detail |
 |---|---|
@@ -184,7 +202,9 @@ Where the French lives:
   be made in its French twin too.**
 - Texts: `scripts/i18n_fr.py` — `CATEGORIES_FR`, `RULES_FR` (summary and impact
   per rule), `REMEDIATION_FR`, `REASONING_FR` (keyed by the English reasoning of
-  the generator), `KIND_LABEL_FR`, `CONFIDENCE_LABEL_FR`, layer explanations.
+  the generator), `KIND_LABEL_FR`, `CONFIDENCE_LABEL_FR`, layer explanations, and
+  `BEFORE_AFTER_FR` (patterns for the generator's before / after summaries such
+  as "6 resources without description"; code-like values stay as they are).
   **A new rule or a new generator reasoning needs its French entry**; a missing
   one falls back to English rather than being guessed.
 
@@ -192,23 +212,48 @@ Check after any change: render the demo in both languages (commands in
 `examples/README.md`), read the visible French text, and confirm the English
 outputs are byte-identical to the committed ones.
 
-## 6. Test
+## 6. Command line: colours and completion
+
+- **Colours** (`c()` in `raml_validator.py`): ANSI codes, only when the output
+  is a terminal, `NO_COLOR` is unset and `--no-color` is not given. Keep every
+  message readable without colour; never colour a file the command writes.
+- **Completion**: `completions/_raml-validator` (zsh, `#compdef`, `_arguments`),
+  `completions/raml-validator.bash` (`complete -F`) and
+  `completions/raml-validator.ps1` (`Register-ArgumentCompleter -Native`).
+  **A new subcommand or option must be added to the three files and to the
+  command's help.** Check them with `zsh -n` / `bash -n`, by pressing Tab in
+  each shell, and in PowerShell with `TabExpansion2`.
+- **Windows**: `.venv\Scripts\python.exe` instead of `.venv/bin/python`; the
+  command restarts in `.venv` with `subprocess` (no `os.execv`); colours are
+  turned on with `os.system("")`; the scripts run in Python UTF-8 mode
+  (`PYTHONUTF8=1`) so French templates and RAML files read the same on every
+  OS. Keep paths built with `pathlib`, never with `/` in strings.
+- **Exit codes**: 0 done, 1 a step failed, 2 PyYAML or Jinja2 missing (with
+  the install command in the message), 3 file not found; `verify` returns the
+  verifier's codes 0-4.
+- **Python environment**: `setup()` creates `.venv` and installs PyYAML and
+  Jinja2, trying `$RAML_VALIDATOR_PYTHON`, `python3`, then `python3.13` …
+  `python3.9` until one works. `audit`, `fix`, `run` and `verify` call it on
+  first use, then restart themselves in `.venv` with `os.execv` (output is
+  line-buffered so no message is lost). `raml-validator setup` runs it on demand.
+
+## 7. Test
 
 ```bash
-python3 scripts/verify_install.py
+raml-validator verify
 ```
 
 Must end with `FULLY DEPLOYED` and exit code `0`. The 7 steps: folder,
 version banner, file inventory, broken fixture (17 findings, 21/100, NO-GO),
 clean fixture (0, 100/100, GO), round-trip on the broken fixture (100/100),
-reference demo (16 findings, 26/100 → 100/100).
+reference demo through `raml-validator run` (16 findings, 26/100 → 100/100).
 
 Compare a full snapshot after a change:
 
 ```bash
-python3 scripts/audit_raml.py --raml examples/customerOrderAPI.raml --out /tmp/now.json
+raml-validator audit examples/customerOrderAPI.raml --out-dir /tmp --no-color
 diff <(jq -S 'del(.date,.skill_version,.spec_path)' examples/customerOrderAPI-findings.json) \
-     <(jq -S 'del(.date,.skill_version,.spec_path)' /tmp/now.json)
+     <(jq -S 'del(.date,.skill_version,.spec_path)' /tmp/customerOrderAPI-findings.json)
 ```
 
 No diff means no regression. A diff you intended means: regenerate the
@@ -218,17 +263,22 @@ explain it in the CHANGELOG.
 Before release, also run the whole chain on the demo (commands in
 `examples/README.md`) and open both HTML files.
 
-## 7. Release
+## 8. Release
 
-1. Set the new version in `scripts/version.py` and in the `SKILL.md` banner
-   (`Version:` / `Released:`); `verify_install.py` checks they match.
+1. Set the new version in `scripts/version.py`, in the `SKILL.md` banner
+   (`Version:` / `Released:`) and in `.claude-plugin/plugin.json`;
+   `verify_install.py` checks that the three match.
 2. Add the CHANGELOG entry and write `RELEASE-NOTES-x.y.z.md`; update the
    version badge and the *Historique du document* tables you touched.
-3. Regenerate `examples/demo/` in both languages and run `verify_install.py`.
-4. Commit, tag `vx.y.z`, push; create the GitHub release from the release notes.
-5. Re-upload the skill folder to Claude (see [INSTALL.md](../INSTALL.md)).
+3. Regenerate `examples/demo/` in both languages (commands in
+   `examples/README.md`) and run `raml-validator verify`.
+4. Check that the `acceptance` workflow is green on the three OSes, run the
+   **[acceptance tests](ACCEPTANCE-TESTS.md)** on a real machine from a clean
+   state, and record the run in its table.
+5. Commit, tag `vx.y.z`, push; create the GitHub release from the release notes.
+6. Re-upload the skill folder to Claude (see [INSTALL.md](../INSTALL.md)).
 
-## 8. Known limitations
+## 9. Known limitations
 
 - `REUSE-002` (duplicated error schemas) and `SPEC-004` (inline schemas over 20
   lines) are left to Claude's review.
@@ -243,7 +293,7 @@ Before release, also run the whole chain on the demo (commands in
 
 | Version | Date | Commentaire |
 |---|---|---|
-| 1.4.2 | 2026-10-25 | First developer guide: architecture, data contracts (incl. the `api` block), adding a rule, reports and charter, bilingual generation (`--lang en` / `fr`), tests, release, limitations. |
+| 1.5.0 | 2026-10-25 | First developer guide: architecture, data contracts (incl. the `api` block), adding a rule, reports and charter, bilingual generation (`--lang en` / `fr`), the `raml-validator` command with colours and completion, tests, release, limitations. |
 
 Contact: Karim DJAAFAR — [kdjaafar@jasmineconseil.com](mailto:kdjaafar@jasmineconseil.com)
 

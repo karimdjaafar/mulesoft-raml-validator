@@ -1,0 +1,112 @@
+# Acceptance tests of mulesoft-raml-validator on Ubuntu, macOS and Windows
+# (docs/ACCEPTANCE-TESTS.md, automated part). Runs on every push and pull
+# request; the platforms that pass are the qualified ones (INSTALL.md).
+name: acceptance
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  unix:
+    name: ${{ matrix.os }} / Python ${{ matrix.python }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-24.04, macos-15]
+        python: ["3.9", "3.12", "3.13"]
+    runs-on: ${{ matrix.os }}
+    defaults:
+      run:
+        working-directory: skills/mulesoft-raml-validator
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python }}
+      - name: 1. Clean start
+        run: |
+          echo "$PWD/bin" >> "$GITHUB_PATH"
+          bin/raml-validator --version
+          ../../bin/raml-validator --version
+      - name: 2. Automatic installation and install check
+        run: |
+          raml-validator verify
+          test -x .venv/bin/python
+          raml-validator setup | grep "Python environment ready"
+      - name: 3. Completion scripts
+        run: |
+          raml-validator completion bash > /tmp/c.bash && bash -n /tmp/c.bash
+          if command -v zsh >/dev/null; then raml-validator completion zsh > /tmp/c.zsh && zsh -n /tmp/c.zsh; fi
+      - name: 4-5. Reference demo, English and French
+        run: |
+          raml-validator run examples/demo/leave-management-api.raml --out-dir out | tee en.txt
+          grep -q "NO-GO — score 26/100, 16 findings" en.txt
+          grep -q "GO — score 100/100, 0 findings" en.txt
+          raml-validator run examples/demo/leave-management-api.raml --out-dir out --lang fr --api-description "Gestion des congés des employés." | tee fr.txt
+          grep -q "description traduite" out/leave-management-api-report.fr.html
+          grep -q "API auditée" out/leave-management-api-remediation-guide.fr.html
+      - name: 6. Clean specification
+        run: raml-validator audit examples/s-customer-orders-api.raml --out-dir out | grep -q "GO — score 100/100"
+      - name: 7. No colours when piped
+        run: |
+          if raml-validator audit examples/s-customer-orders-api.raml --out-dir out | grep -q $'\e\['; then exit 1; fi
+      - name: 8. Error cases
+        run: |
+          set +e
+          raml-validator audit missing.raml; code=$?
+          test "$code" -eq 3
+          raml-validator run examples/demo/; test $? -eq 3
+          raml-validator run examples/demo/leave-management-api.raml --lang de; test $? -eq 2
+
+  windows:
+    name: windows-2022 / Python ${{ matrix.python }}
+    strategy:
+      fail-fast: false
+      matrix:
+        python: ["3.9", "3.12", "3.13"]
+    runs-on: windows-2022
+    defaults:
+      run:
+        shell: pwsh
+        working-directory: skills/mulesoft-raml-validator
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python }}
+      - name: 1. Clean start
+        run: |
+          "$PWD\bin" | Out-File -FilePath $env:GITHUB_PATH -Append -Encoding utf8
+          bin\raml-validator.cmd --version
+      - name: 2. Automatic installation and install check
+        run: |
+          raml-validator verify
+          if ($LASTEXITCODE -ne 0) { exit 1 }
+          if (-not (Test-Path .venv\Scripts\python.exe)) { exit 1 }
+      - name: 3. PowerShell completion
+        run: |
+          raml-validator completion powershell | Out-String | Invoke-Expression
+          $r = TabExpansion2 -inputScript 'raml-validator ' -cursorColumn 15
+          $names = $r.CompletionMatches.CompletionText
+          if ('run' -notin $names) { exit 1 }
+          $r = TabExpansion2 -inputScript 'raml-validator run x.raml --lang ' -cursorColumn 33
+          if ('fr' -notin $r.CompletionMatches.CompletionText) { exit 1 }
+      - name: 4-5. Reference demo, English and French
+        run: |
+          $en = raml-validator run examples\demo\leave-management-api.raml --out-dir out | Out-String
+          if ($en -notmatch 'NO-GO') { exit 1 }; if ($en -notmatch 'score 26/100, 16 findings') { exit 1 }
+          raml-validator run examples\demo\leave-management-api.raml --out-dir out --lang fr --api-description "Gestion des congés des employés."
+          if (-not (Select-String -Path out\leave-management-api-report.fr.html -Pattern 'description traduite' -Quiet)) { exit 1 }
+      - name: 6. Clean specification
+        run: |
+          $o = raml-validator audit examples\s-customer-orders-api.raml --out-dir out | Out-String
+          if ($o -notmatch 'score 100/100') { exit 1 }
+      - name: 8. Error cases
+        run: |
+          raml-validator audit missing.raml
+          if ($LASTEXITCODE -ne 3) { exit 1 }
+          raml-validator run examples\demo\
+          if ($LASTEXITCODE -ne 3) { exit 1 }
+          exit 0

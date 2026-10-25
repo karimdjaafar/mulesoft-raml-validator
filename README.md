@@ -3,12 +3,12 @@
 # mulesoft-raml-validator
 
 [![License: Apache 2.0](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](LICENSE)
-[![Version](https://img.shields.io/badge/version-1.4.2-E97132.svg)](CHANGELOG.md)
+[![Version](https://img.shields.io/badge/version-1.5.0-E97132.svg)](CHANGELOG.md)
 [![Skill](https://img.shields.io/badge/Claude-Skill-0E2841.svg)](https://docs.claude.com/en/agents-and-tools/agent-skills/overview)
 
 | Document | Version | Date | Author | Status |
 |---|---|---|---|---|
-| README — mulesoft-raml-validator | 1.4.2 | 2026-10-25 | Karim DJAAFAR — Jasmine Conseil | Released |
+| README — mulesoft-raml-validator | 1.5.0 | 2026-10-25 | Karim DJAAFAR — Jasmine Conseil | Released |
 
 > A Claude skill that audits MuleSoft RAML 1.0 API specifications for production
 > readiness — naming, API-Led Connectivity layering, reuse, examples, security,
@@ -56,27 +56,40 @@ Audit this RAML for production readiness: [paste or attach your RAML]
 Generate a best-practices version of this RAML and the remediation guide.
 ```
 
-### Use the scripts on their own
+### Use the `raml-validator` command
 
-Python 3.9+ with `PyYAML` and `Jinja2`. From the skill folder:
+One command, no script to chain by hand, on **macOS, Linux and Windows**
+(setup in [INSTALL.md](INSTALL.md)):
 
 ```bash
-python scripts/audit_raml.py --raml path/to/spec.raml --out findings.json
-python scripts/render_report.py --findings findings.json --out report.html
-python scripts/generate_best_practices.py --raml path/to/spec.raml --findings findings.json \
-  --out-raml spec-best-practices.raml --out-transformations transformations.json
-python scripts/render_remediation_guide.py --transformations transformations.json \
-  --findings findings.json --out-md guide.md --out-html guide.html
+raml-validator run   my-api.raml --out-dir reports/              # everything, in English
+raml-validator run   my-api.raml --out-dir reports/ --lang fr    # everything, in French
+raml-validator audit my-api.raml                                 # audit report only
+raml-validator fix   my-api.raml                                 # corrected RAML + remediation guide
+raml-validator verify                                            # install check
+raml-validator --version
 ```
 
-Check an installation in one command: `python scripts/verify_install.py`.
+- **Coloured output** on a terminal (verdict in green or red, step titles,
+  file list); plain when piped, with `--no-color` or when `NO_COLOR` is set.
+- **Tab completion** for zsh, bash and PowerShell: commands, options,
+  `en`/`fr`, and only `.raml` files for the spec —
+  `eval "$(raml-validator completion zsh)"`.
+- Files are named after the spec: `my-api-findings.json`, `my-api-report.html`,
+  `my-api-best-practices.raml`, `my-api-transformations.json`,
+  `my-api-remediation-guide.md` / `.html` (`.fr.html` / `.fr.md` in French).
+- `--api-description "…"` shows another description of the API in the
+  reports, e.g. its translation.
+- Prerequisites: macOS, Linux or Windows and Python 3.9+. PyYAML and Jinja2 are
+  installed automatically into a private `.venv` on first use
+  (`raml-validator setup` to do it on demand) — see [INSTALL.md](INSTALL.md#0-prerequisites).
 
 To change the skill (add a rule, extend the generator, change a report, cut a
 release), read the **[Developer guide](docs/DEVELOPER-GUIDE.md)**.
 
 ## Reference demo
 
-[`examples/demo/`](examples/demo/) runs the whole chain on a realistic
+[`examples/demo/`](skills/mulesoft-raml-validator/examples/demo/) runs the whole chain on a realistic
 **Leave Management API** and keeps every deliverable, so you can see the
 output before running anything:
 
@@ -90,8 +103,8 @@ output before running anything:
 
 ## Rule catalog
 
-Full catalog in [`references/raml-best-practices.md`](references/raml-best-practices.md)
-and §2 of [`SKILL.md`](SKILL.md).
+Full catalog in [`references/raml-best-practices.md`](skills/mulesoft-raml-validator/references/raml-best-practices.md)
+and §2 of [`SKILL.md`](skills/mulesoft-raml-validator/SKILL.md).
 
 | Category | Rules | Examples |
 |---|:---:|---|
@@ -106,27 +119,27 @@ and §2 of [`SKILL.md`](SKILL.md).
 
 ## Project structure
 
+The repository is a **Claude plugin** (`jasmine-raml-validator`) holding one
+skill, `mulesoft-raml-validator`:
+
 ```
-mulesoft-raml-validator/
-├── SKILL.md                     # Skill instructions (rules, workflow, output contract)
-├── README.md · CHANGELOG.md · INSTALL.md · UPGRADE.md · RELEASE-NOTES-1.4.2.md
-├── docs/DEVELOPER-GUIDE.md      # architecture, data contracts, adding a rule, release
-├── assets/logo.png
-├── LICENSE · NOTICE · SECURITY.md · CONTRIBUTING.md
-├── scripts/
-│   ├── version.py               # single source of the version
-│   ├── audit_raml.py            # analyzer → findings.json
-│   ├── render_report.py         # findings.json → HTML report
-│   ├── generate_best_practices.py   # refactored RAML + transformations.json
-│   ├── render_remediation_guide.py  # remediation guide (Markdown + HTML)
-│   └── verify_install.py        # install check + regression tests
-├── templates/                   # Jinja2 / Markdown report templates
-├── references/raml-best-practices.md
-└── examples/
-    ├── README.md                # fixtures and how to regenerate them
-    ├── customerOrderAPI.raml (+ findings)        # broken fixture: 21/100 NO-GO
-    ├── s-customer-orders-api.raml (+ findings)   # clean fixture: 100/100 GO
-    └── demo/                    # reference demo, every deliverable
+mulesoft-raml-validator/                 # repository = plugin
+├── .claude-plugin/plugin.json           # plugin manifest (name, version, author, licence)
+├── bin/raml-validator(.cmd)             # the raml-validator command (put this folder on PATH)
+├── skills/mulesoft-raml-validator/      # the skill
+│   ├── SKILL.md                         # instructions for Claude (rules, workflow, output contract)
+│   ├── bin/raml-validator(.cmd)         # launchers used by the skill (macOS, Linux / Windows)
+│   ├── completions/                     # zsh, bash and PowerShell tab completion
+│   ├── scripts/                         # raml_validator.py (the command), audit_raml.py, render_report.py,
+│   │                                    # generate_best_practices.py, render_remediation_guide.py,
+│   │                                    # verify_install.py, version.py, i18n_fr.py
+│   ├── templates/                       # HTML / Markdown report templates (EN, FR)
+│   ├── references/raml-best-practices.md
+│   └── examples/                        # regression fixtures + reference demo (examples/demo/)
+├── docs/DEVELOPER-GUIDE.md · docs/ACCEPTANCE-TESTS.md · docs/images/
+├── README.md · INSTALL.md · UPGRADE.md · CHANGELOG.md · RELEASE-NOTES-1.5.0.md
+├── LICENSE · NOTICE · SECURITY.md · CONTRIBUTING.md · assets/logo.png
+└── .github/                             # issue templates, acceptance workflow (Ubuntu, macOS, Windows)
 ```
 
 ## Open core
@@ -140,17 +153,22 @@ CI/CD integration, custom rules and priority support. Contact
 ## Compatibility
 
 - RAML 1.0 (RAML 0.8 is not supported)
-- Python 3.9+, `PyYAML`, `Jinja2`
+- macOS, Linux or Windows for the command; Python 3.9+; `PyYAML` and `Jinja2`
+  (installed automatically on first use)
 - Claude with code execution enabled (claude.ai, Claude Code, Cowork)
 
 ## Data handling
 
 The scripts read the RAML file you give them and write their outputs next to
-the paths you choose. They make no network call and send no data anywhere.
+the paths you choose; they send no data anywhere. The only network access is the
+**one-time setup**: on first use (or `raml-validator setup`) the command creates
+a private Python environment (`.venv`) inside the skill folder and downloads
+**PyYAML** and **Jinja2** from the Python Package Index (pypi.org). Nothing else
+is downloaded, and nothing about your RAML is sent.
 
 ## Release notes
 
-Latest: [RELEASE-NOTES-1.4.2.md](RELEASE-NOTES-1.4.2.md) — full history in
+Latest: [RELEASE-NOTES-1.5.0.md](RELEASE-NOTES-1.5.0.md) — full history in
 [CHANGELOG.md](CHANGELOG.md).
 
 ## Roadmap
@@ -189,7 +207,7 @@ Copyright (c) 2026 Karim DJAAFAR — Jasmine Conseil
 
 | Version | Date | Commentaire |
 |---|---|---|
-| 1.4.2 | 2026-10-25 | Rewritten for v1.4.2: real script usage, reference demo, structure, data handling, release notes link, contact & feedback, roadmap; Jasmine Conseil cartouches. |
+| 1.5.0 | 2026-10-25 | Rewritten for v1.5.0: real script usage, reference demo, structure, data handling, release notes link, contact & feedback, roadmap; Jasmine Conseil cartouches. |
 | 1.2.0 | 2026-05-04 | Previous README (v1.2.0). |
 
 <p align="right"><span style="color:#E97132">© 2026 Jasmine Conseil</span></p>

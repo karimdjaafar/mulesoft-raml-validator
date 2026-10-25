@@ -1,0 +1,182 @@
+{
+  "title": "RAML Audit Report \u2014 Leave Management API",
+  "subtitle": "MuleSoft RAML 1.0 production-readiness audit",
+  "spec_path": "examples/demo/leave-management-api.raml",
+  "date": "2026-10-25",
+  "skill_version": "mulesoft-raml-validator v1.5.0",
+  "score": 26,
+  "verdict": "NO-GO",
+  "findings": [
+    {
+      "rule": "SEC-001",
+      "severity": "BLOCKER",
+      "location": "root",
+      "summary": "No securitySchemes and no root securedBy: \u2014 API is fully open.",
+      "impact": "Any client can call any endpoint. Hard fail for any non-public API.",
+      "remediation_code": "securitySchemes:\n  oauth_2_0:\n    type: OAuth 2.0\n    settings:\n      authorizationUri: https://auth.example.com/oauth/authorize\n      accessTokenUri: https://auth.example.com/oauth/token\n      authorizationGrants: [ authorization_code, client_credentials ]\n\nsecuredBy: [ oauth_2_0 ]"
+    },
+    {
+      "rule": "SPEC-003",
+      "severity": "BLOCKER",
+      "location": "GET /leaveRequests (missing [400, 401, 404, 500]); POST /leaveRequests (missing [401, 404, 500]); GET /leaveRequests/{requestId} (missing [400, 401, 500]) (+3 more)",
+      "summary": "6 methods do not declare the full required error set (400/401/404/500).",
+      "impact": "Consumers have no contract for failure modes. Code generation, mocking, and MUnit are all impacted.",
+      "remediation_code": "traits:\n  standardErrors:\n    responses:\n      400: { body: { application/json: { type: ErrorResponse } } }\n      401: { body: { application/json: { type: ErrorResponse } } }\n      404: { body: { application/json: { type: ErrorResponse } } }\n      500: { body: { application/json: { type: ErrorResponse } } }"
+    },
+    {
+      "rule": "NAMING-001",
+      "severity": "MAJOR",
+      "location": "/leaveRequests",
+      "summary": "Resource segment 'leaveRequests' is not kebab-case.",
+      "impact": "Inconsistent URL ergonomics and against MuleSoft naming guidance.",
+      "remediation_code": "# rename to kebab-case, e.g.\n# /leaveRequests  \u2192  /leave-requests"
+    },
+    {
+      "rule": "NAMING-002",
+      "severity": "MAJOR",
+      "location": "/employee",
+      "summary": "Resource segment 'employee' looks singular; collection resources must be plural nouns.",
+      "impact": "Singular collection names confuse REST consumers expecting list semantics.",
+      "remediation_text": "Rename 'employee' to its plural form."
+    },
+    {
+      "rule": "NAMING-004",
+      "severity": "MAJOR",
+      "location": "title",
+      "summary": "Title 'Leave Management API' does not follow the s-/p-/x- layer convention.",
+      "impact": "API-Led catalogs sort and filter by layer prefix; this API will not be discoverable as System / Process / Experience in Anypoint Exchange.",
+      "remediation_code": "title: s-customer-orders-api    # System layer\n# or\ntitle: p-order-management-api  # Process layer\n# or\ntitle: x-web-orders-api        # Experience layer"
+    },
+    {
+      "rule": "REUSE-001",
+      "severity": "MAJOR",
+      "location": "GET /leaveRequests, GET /employee/{employeeId}/balance",
+      "summary": "Pagination duplicated on 2 resources without a trait.",
+      "impact": "Future pagination changes (defaults, max page size, link headers) require editing every resource.",
+      "remediation_code": "traits:\n  pageable:\n    queryParameters:\n      page:     { type: integer, default: 1, minimum: 1 }\n      pageSize: { type: integer, default: 25, minimum: 1, maximum: 100 }\n\n/customer-orders:\n  get:\n    is: [ pageable ]"
+    },
+    {
+      "rule": "SEC-002",
+      "severity": "MAJOR",
+      "location": "PUT /users/{userId}/password",
+      "summary": "1 sensitive endpoint(s) lack an explicit securedBy: with a narrow scope.",
+      "impact": "Sensitive routes (payment, auth, password, credentials) should declare a method-specific scope, not inherit the root scope.",
+      "remediation_code": "/users/{userId}/password:\n  put:\n    securedBy:\n      - oauth_2_0: { scopes: [ \"users:credentials:write\" ] }"
+    },
+    {
+      "rule": "SPEC-001",
+      "severity": "MAJOR",
+      "location": "POST /leaveRequests (application/json)",
+      "summary": "1 request bodies have no inline example.",
+      "impact": "Mocking Service, API Designer 'Try it', and consumer SDK generators all rely on `example`.",
+      "remediation_code": "post:\n  body:\n    application/json:\n      type: CustomerOrderRequest\n      example:\n        customerId: \"CUST-00042\"\n        items: [ { sku: \"SKU-001\", quantity: 2 } ]"
+    },
+    {
+      "rule": "SPEC-002",
+      "severity": "MAJOR",
+      "location": "GET /leaveRequests \u2192 200 (application/json); GET /leaveRequests/{requestId} \u2192 200 (application/json); POST /leaveRequests/{requestId}/approve \u2192 200 (application/json)",
+      "summary": "3 response bodies have no inline example per status code.",
+      "impact": "Consumers cannot stub or mock against the contract."
+    },
+    {
+      "rule": "VER-002",
+      "severity": "MAJOR",
+      "location": "baseUri",
+      "summary": "{version} placeholder is not interpolated in baseUri.",
+      "impact": "Consumers cannot pin to a major version via the URL; parallel rollout (v1 \u2192 v2) is impossible.",
+      "remediation_code": "baseUri: https://api.example.com/customer-orders/{version}"
+    },
+    {
+      "rule": "DOC-002",
+      "severity": "MINOR",
+      "location": "/leaveRequests; /leaveRequests/{requestId}; /leaveRequests/{requestId}/approve; /employee; /employee/{employeeId}/balance (+1 more)",
+      "summary": "6 resources have no description: field.",
+      "remediation_text": "Add a one-line description on every resource."
+    },
+    {
+      "rule": "NAMING-003",
+      "severity": "MINOR",
+      "location": "GET /leaveRequests?page_size; GET /employee/{employeeId}/balance?page_size",
+      "summary": "2 occurrences \u2014 Query parameter 'page_size' is not camelCase.",
+      "remediation_code": "queryParameters:\n  pageSize:\n    type: string"
+    },
+    {
+      "rule": "APIC-003",
+      "severity": "INFO",
+      "location": "title",
+      "summary": "Title should start with the layer prefix (s-/p-/x-) for instant identification."
+    },
+    {
+      "rule": "DOC-003",
+      "severity": "INFO",
+      "location": "root",
+      "summary": "No documentation: section with onboarding guide.",
+      "remediation_code": "documentation:\n  - title: Overview\n    content: |\n      This API exposes ...\n  - title: Getting started\n    content: !include docs/getting-started.md"
+    },
+    {
+      "rule": "SEC-003",
+      "severity": "INFO",
+      "location": "n/a",
+      "summary": "Once authentication is added, prefer OAuth 2.0 over basic auth."
+    },
+    {
+      "rule": "VER-003",
+      "severity": "INFO",
+      "location": "version: v1.0.3",
+      "summary": "Use semantic versioning (v1, v2) in the URI; reserve patch/minor for the changelog.",
+      "remediation_code": "version: v1   # patch level v1.2.3 belongs in changelogs/headers"
+    }
+  ],
+  "api": {
+    "title": "Leave Management API",
+    "version": "v1.0.3",
+    "base_uri": "https://api.demo.jasmineconseil.com/leaves",
+    "media_type": "application/json",
+    "layer": "unknown",
+    "description": "Employee leave management. Employees submit leave requests (paid, sick or\nunpaid) and follow their status; managers approve them; everyone can check\nthe remaining leave balance of an employee.",
+    "resources": 6,
+    "operations": 6,
+    "methods": {
+      "GET": 3,
+      "POST": 2,
+      "PUT": 1
+    },
+    "operation_list": [
+      {
+        "method": "GET",
+        "path": "/leaveRequests",
+        "description": "List leave requests."
+      },
+      {
+        "method": "POST",
+        "path": "/leaveRequests",
+        "description": "Submit a leave request."
+      },
+      {
+        "method": "GET",
+        "path": "/leaveRequests/{requestId}",
+        "description": ""
+      },
+      {
+        "method": "POST",
+        "path": "/leaveRequests/{requestId}/approve",
+        "description": "Approve a submitted leave request."
+      },
+      {
+        "method": "GET",
+        "path": "/employee/{employeeId}/balance",
+        "description": ""
+      },
+      {
+        "method": "PUT",
+        "path": "/users/{userId}/password",
+        "description": ""
+      }
+    ],
+    "security_schemes": [],
+    "types": [
+      "LeaveRequest"
+    ],
+    "traits": []
+  }
+}

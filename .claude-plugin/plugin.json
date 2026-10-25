@@ -1,0 +1,15 @@
+{
+  "name": "jasmine-raml-validator",
+  "displayName": "RAML Validator by Jasmine Conseil",
+  "version": "1.5.0",
+  "description": "Audit MuleSoft RAML 1.0 API specifications for production readiness (23 rules: naming, API-Led layering, reuse, examples, security, versioning, documentation), score them, and generate a corrected best-practices RAML with a remediation guide, in English or French.",
+  "author": {
+    "name": "Jasmine Conseil Inc",
+    "email": "kdjaafar@jasmineconseil.com",
+    "url": "https://www.jasmineconseil.com"
+  },
+  "homepage": "https://github.com/karimdjaafar/mulesoft-raml-validator",
+  "repository": "https://github.com/karimdjaafar/mulesoft-raml-validator",
+  "license": "Apache-2.0",
+  "keywords": ["mulesoft", "raml", "api", "api-led", "audit", "api-governance", "anypoint"]
+}

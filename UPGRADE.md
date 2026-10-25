@@ -2,14 +2,19 @@
 
 | Document | Version | Date | Author | Status |
 |---|---|---|---|---|
-| UPGRADE — mulesoft-raml-validator | 1.4.2 | 2026-10-25 | Karim DJAAFAR — Jasmine Conseil | Released |
+| UPGRADE — mulesoft-raml-validator | 1.5.0 | 2026-10-25 | Karim DJAAFAR — Jasmine Conseil | Released |
 
-## From 1.4.x to 1.4.2
+## From 1.4.x to 1.5.0
 
-A **patch** release: same 23 rules, same score formula. The findings JSON gains
-an optional `api` block (description of the audited API); files without it
-still render. Replace the whole skill folder with the 1.4.2 folder (see
-[INSTALL.md](INSTALL.md)), then run `python3 scripts/verify_install.py`.
+A **minor** release: the new `raml-validator` command (coloured output, zsh /
+bash completion), English or French reports, same 23 rules and score formula.
+The findings JSON gains an optional `api` block; files without it still render.
+Replace the whole skill folder with the 1.5.0 folder, now
+`skills/mulesoft-raml-validator/` in the repository, which is also a Claude plugin (see
+[INSTALL.md](INSTALL.md)), then run `raml-validator verify`.
+
+The scripts in `skills/mulesoft-raml-validator/scripts/` still work with their old arguments, but use the
+command from now on: `raml-validator run my-api.raml` replaces the four calls.
 
 What can change in your results:
 
@@ -38,7 +43,7 @@ stay readable: the findings JSON schema has not changed since 1.2.0.
 
 | Version | Date | Commentaire |
 |---|---|---|
-| 1.4.2 | 2026-10-25 | Rewritten for 1.4.2: patch upgrade path, effects on existing scores, older versions. |
+| 1.5.0 | 2026-10-25 | Rewritten for 1.5.0: patch upgrade path, effects on existing scores, older versions. |
 | 1.3.0 | 2026-05 | First version (1.2.0 → 1.3.0). |
 
 <p align="right"><span style="color:#E97132">© 2026 Jasmine Conseil</span></p>

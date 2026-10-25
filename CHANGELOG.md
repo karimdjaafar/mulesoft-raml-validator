@@ -2,7 +2,7 @@
 
 | Document | Version | Date | Author | Status |
 |---|---|---|---|---|
-| CHANGELOG — mulesoft-raml-validator | 1.4.2 | 2026-10-25 | Karim DJAAFAR — Jasmine Conseil | Released |
+| CHANGELOG — mulesoft-raml-validator | 1.5.0 | 2026-10-25 | Karim DJAAFAR — Jasmine Conseil | Released |
 
 All notable changes to this skill are documented in this file. The format is
 based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and the
@@ -10,12 +10,61 @@ project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ---
 
-## [1.4.2] — 2026-10-25
+## [1.5.0] — 2026-10-25
+
+### Added — Claude plugin
+- **The repository is a Claude plugin**, `jasmine-raml-validator` ("RAML
+  Validator by Jasmine Conseil"): `.claude-plugin/plugin.json` at the root, the
+  skill moved to `skills/mulesoft-raml-validator/` (SKILL.md, scripts,
+  templates, references, examples, completions, launchers), thin launchers in
+  the root `bin/`. The command keeps its name, `raml-validator`.
+  `verify_install.py` checks that `plugin.json` carries the skill's version.
+- README "Data handling" states the only network access: the one-time download
+  of PyYAML and Jinja2 from PyPI.
+
+### Added — command line
+- **`raml-validator` command** (`bin/raml-validator` → `scripts/raml_validator.py`):
+  `audit`, `fix`, `run` (whole chain), `verify` (keeps the verifier's exit
+  codes), `completion zsh|bash`, `--version`; options `--out-dir`,
+  `--lang en|fr`, `--api-description`, `--no-color`. Files are named after the
+  spec. The individual scripts are unchanged and still callable.
+- **Dependencies installed for you**: on first use (or with
+  `raml-validator setup`) the command creates a private `.venv` and installs
+  PyYAML and Jinja2, falling back from `python3` to `python3.13` … `python3.9`
+  if the usual Python cannot (e.g. Homebrew's newest Python). The launcher
+  then uses `.venv` (or `RAML_VALIDATOR_PYTHON`). Prerequisites are listed in
+  INSTALL.md.
+- **Coloured output** (ANSI) on a terminal: step titles, verdict in green or
+  red, list of files written; off when piped, with `--no-color` or `NO_COLOR`.
+- **Tab completion** for zsh and bash (`completions/`), loaded with
+  `eval "$(raml-validator completion zsh)"`: commands, options, languages,
+  `.raml` files only for the spec.
+- `verify_install.py` step 7 now runs the reference demo through
+  `raml-validator run`.
+
+### Added — Windows and continuous qualification
+- **Windows support**: `bin\raml-validator.cmd` launcher (cmd, PowerShell),
+  `.venv\Scripts\python.exe` handling, PowerShell tab completion
+  (`raml-validator completion powershell`), colours in the Windows console,
+  UTF-8 mode for the scripts.
+- **`acceptance` GitHub Actions workflow**: the automated acceptance tests on
+  Ubuntu 24.04, macOS 15 and Windows Server 2022, with Python 3.9, 3.12 and
+  3.13, on every push. The *Qualified platforms* table in INSTALL.md lists
+  what is qualified and how.
 
 ### Fixed
+- French remediation guide: the before / after summaries of the generator
+  ("6 resources without description", "placeholder examples added…") were
+  left in English; they are now translated. The guides point to
+  `raml-validator audit` instead of `scripts/audit_raml.py` (found during
+  acceptance).
+- Base URI no longer wraps in the middle of a word in the "API under audit"
+  section (found during acceptance).
+- A folder given instead of a RAML file now gives `ERROR: not a file: …`
+  (exit code 3) instead of a Python traceback (found during acceptance).
 - **Repository re-synchronised with the released skill.** The GitHub
   repository had stayed at v1.2.0 while v1.3.0 → v1.4.1 shipped to Claude
-  users. v1.4.2 brings the code, templates and examples of v1.4.1 back into
+  users. v1.5.0 brings the code, templates and examples of v1.4.1 back into
   the repository, and merges this changelog.
 - **One finding per rule (`audit_raml.py`).** Findings sharing a rule ID are
   now merged into one entry listing every location, as §4 of `SKILL.md`
@@ -61,6 +110,11 @@ project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   palette, Calibri, © 2026 Jasmine Conseil footer. The Enterprise Edition
   now offers the client's own branding instead.
 
+### Added — documentation
+- `docs/ACCEPTANCE-TESTS.md`: the 8-step acceptance test run before each
+  release (clean start, automatic setup, completion, demo EN/FR, clean spec,
+  no colour, error cases), with a record of runs.
+
 ### Changed
 - Rule count corrected to **23** (21 automated; `REUSE-002` and `SPEC-004` by
   Claude's review) in
@@ -69,7 +123,7 @@ project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   every document, GitHub issue templates (bug, false positive, rule proposal),
   "Follow the project" section in the README.
 - `README.md`, `INSTALL.md`, `UPGRADE.md` and `examples/README.md` rewritten
-  for v1.4.2.
+  for v1.5.0.
 
 ### Removed
 - `examples/bad-customer-orders.raml` and `examples/sample-report.md`
@@ -340,8 +394,9 @@ project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## Roadmap — tentative
 
-- **1.5.0** — `SPEC-005` JSON Schema validity check; `--strict` CI gate
-  (non-zero exit on any BLOCKER); layer inference on nested resources.
+- **1.6.0** — `SPEC-005` JSON Schema validity check; `--strict` CI gate
+  (non-zero exit on any BLOCKER); layer inference on nested resources;
+  installation with `pipx`.
 - **Later** — OAS 3.0 ingestion; diff mode between two RAML versions;
   Anypoint Exchange governance ruleset export; GitHub Actions template.
 
@@ -368,4 +423,4 @@ the next MAJOR boundary.
 
 | Version | Date | Commentaire |
 |---|---|---|
-| 1.4.2 | 2026-10-25 | Changelogs of the repository (1.0.0–1.2.0) and of the released skill (1.3.0–1.4.1) merged; 1.4.2 entry; roadmap updated. |
+| 1.5.0 | 2026-10-25 | Changelogs of the repository (1.0.0–1.2.0) and of the released skill (1.3.0–1.4.1) merged; 1.5.0 entry; roadmap updated. |

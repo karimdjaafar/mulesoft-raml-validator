@@ -1,0 +1,14 @@
+#!/bin/sh
+# raml-validator launcher (macOS, Linux).
+# Python used, in this order: $RAML_VALIDATOR_PYTHON, then the .venv folder of
+# the repository (created by the install), then python3 from the PATH.
+DIR=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)
+ROOT="$DIR/.."
+if [ -n "$RAML_VALIDATOR_PYTHON" ]; then
+  PY="$RAML_VALIDATOR_PYTHON"
+elif [ -x "$ROOT/.venv/bin/python" ]; then
+  PY="$ROOT/.venv/bin/python"
+else
+  PY=python3
+fi
+exec "$PY" "$ROOT/scripts/raml_validator.py" "$@"

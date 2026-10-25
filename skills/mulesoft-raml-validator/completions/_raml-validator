@@ -1,0 +1,31 @@
+#compdef raml-validator
+# zsh completion for raml-validator — load with:  eval "$(raml-validator completion zsh)"
+_raml_validator() {
+  local -a cmds
+  cmds=(
+    'audit:audit a RAML spec (findings + report)'
+    'fix:corrected RAML + remediation guide'
+    'run:audit then fix - every deliverable'
+    'verify:install check and regression suite'
+    'setup:create .venv with PyYAML and Jinja2'
+    'completion:print the shell completion script'
+  )
+  if (( CURRENT == 2 )); then
+    _describe 'command' cmds
+    return
+  fi
+  case $words[2] in
+    audit|fix|run)
+      _arguments \
+        '2:RAML spec:_files -g "*.raml(-.)"' \
+        '--out-dir[output folder]:folder:_files -/' \
+        '--lang[report language]:language:(en fr)' \
+        '--api-description[description of the API shown in the reports]:text:' \
+        '--no-color[plain output]' ;;
+    verify)
+      _arguments '--root[skill folder to check]:folder:_files -/' ;;
+    completion)
+      _arguments '2:shell:(zsh bash powershell)' ;;
+  esac
+}
+compdef _raml_validator raml-validator

@@ -37,16 +37,17 @@ Rules are reviewed against the same bar as the existing 23: every rule must be
 ### Submitting pull requests
 
 1. Fork the repo and create a feature branch (`git checkout -b feature/my-rule`).
-2. Make your changes. For new rules, update **all** of:
+2. Make your changes (skill files live in `skills/mulesoft-raml-validator/`). For new rules, update **all** of:
    - `SKILL.md` §2 (the rule definition)
    - `references/raml-best-practices.md` (the cheat sheet)
    - `scripts/audit_raml.py` (the detection logic, if automatable)
    - `examples/` (a fixture demonstrating the rule)
    - `CHANGELOG.md` (under `[Unreleased]`)
-3. Run `python scripts/verify_install.py`: every step must pass (fixtures,
+3. Run `bin/raml-validator verify`: every step must pass (fixtures,
    round-trip and the reference demo in `examples/demo/`). If you change a
    rule on purpose, regenerate the snapshots as `examples/README.md` explains.
-4. Open a pull request with a clear description and a link to the issue.
+4. For a release, also run the [acceptance tests](docs/ACCEPTANCE-TESTS.md).
+5. Open a pull request with a clear description and a link to the issue.
 
 ---
 
@@ -67,7 +68,7 @@ pip install pyyaml jinja2
 Check your setup:
 
 ```bash
-python scripts/verify_install.py
+bin/raml-validator verify
 ```
 
 It must end with `FULLY DEPLOYED` and exit code 0.
