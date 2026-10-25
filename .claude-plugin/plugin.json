@@ -10,6 +10,10 @@
   },
   "homepage": "https://github.com/karimdjaafar/mulesoft-raml-validator",
   "repository": "https://github.com/karimdjaafar/mulesoft-raml-validator",
+  "documentationUrl": "https://github.com/karimdjaafar/mulesoft-raml-validator#readme",
+  "supportUrl": "https://github.com/karimdjaafar/mulesoft-raml-validator/issues/new/choose",
+  "privacyPolicyUrl": "https://github.com/karimdjaafar/mulesoft-raml-validator/blob/main/PRIVACY.md",
+  "termsOfServiceUrl": "https://github.com/karimdjaafar/mulesoft-raml-validator/blob/main/LICENSE",
   "license": "Apache-2.0",
   "keywords": [
     "mulesoft",
