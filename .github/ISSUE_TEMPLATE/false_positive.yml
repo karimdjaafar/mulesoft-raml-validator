@@ -1,0 +1,22 @@
+name: False positive / false negative
+description: A rule fires when it should not, or misses a real problem.
+labels: [rule-accuracy]
+body:
+  - type: input
+    id: rule
+    attributes:
+      label: Rule ID
+      placeholder: "NAMING-002"
+    validations:
+      required: true
+  - type: textarea
+    id: why
+    attributes:
+      label: Why the result is wrong
+    validations:
+      required: true
+  - type: textarea
+    id: raml
+    attributes:
+      label: Minimal RAML excerpt
+      render: yaml

@@ -43,30 +43,34 @@ Rules are reviewed against the same bar as the existing 23: every rule must be
    - `scripts/audit_raml.py` (the detection logic, if automatable)
    - `examples/` (a fixture demonstrating the rule)
    - `CHANGELOG.md` (under `[Unreleased]`)
-3. Run the existing audit on `examples/bad-customer-orders.raml` and verify
-   the score and findings haven't regressed unexpectedly.
+3. Run `python scripts/verify_install.py`: every step must pass (fixtures,
+   round-trip and the reference demo in `examples/demo/`). If you change a
+   rule on purpose, regenerate the snapshots as `examples/README.md` explains.
 4. Open a pull request with a clear description and a link to the issue.
 
 ---
 
 ## Development setup
 
+Read the [Developer guide](docs/DEVELOPER-GUIDE.md) first: architecture, data
+contracts, how to add a rule, tests and release.
+
+
 ```bash
-git clone https://github.com/karim-djaafar/mulesoft-raml-validator.git
+git clone https://github.com/karimdjaafar/mulesoft-raml-validator.git
 cd mulesoft-raml-validator
 python -m venv .venv
 source .venv/bin/activate          # Windows: .venv\Scripts\activate
-pip install pyyaml
+pip install pyyaml jinja2
 ```
 
-Run the audit on the sample RAML to verify your setup:
+Check your setup:
 
 ```bash
-python scripts/audit_raml.py --raml examples/bad-customer-orders.raml --out findings.json
-python scripts/render_report.py --findings findings.json --out report.md --format markdown
+python scripts/verify_install.py
 ```
 
-You should get a score around 19/100 with 18 findings.
+It must end with `FULLY DEPLOYED` and exit code 0.
 
 ---
 
@@ -113,7 +117,7 @@ The following are intentionally **not** in scope for community contributions:
 - **CI/CD plugins** (Maven, Gradle, GitHub Actions). Enterprise feature.
 
 If you have a use case that touches these, please reach out at
-[contact@jasmineconseil.com](mailto:contact@jasmineconseil.com) — there may
+[kdjaafar@jasmineconseil.com](mailto:kdjaafar@jasmineconseil.com) — there may
 be a path via the Enterprise Edition or a partnership.
 
 ---
@@ -121,8 +125,8 @@ be a path via the Enterprise Edition or a partnership.
 ## Questions?
 
 - General questions: open a GitHub Discussion.
-- Sensitive or commercial questions: [contact@jasmineconseil.com](mailto:contact@jasmineconseil.com).
+- Sensitive or commercial questions: [kdjaafar@jasmineconseil.com](mailto:kdjaafar@jasmineconseil.com).
 - Security issues: see [SECURITY.md](SECURITY.md) (or email
-  [security@jasmineconseil.com](mailto:security@jasmineconseil.com)).
+  [kdjaafar@jasmineconseil.com](mailto:kdjaafar@jasmineconseil.com)).
 
 Thank you for helping make MuleSoft RAML specs better, one audit at a time.

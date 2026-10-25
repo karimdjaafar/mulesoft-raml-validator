@@ -1,0 +1,820 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>RAML Audit Report — Leave Management API</title>
+  <style>
+    :root {
+      /* Jasmine Conseil palette: orange #E97132, dark blue #0E2841 (v1.4.2) */
+      --header-blue:    #E97132;     /* table header band */
+      --footer-navy:    #0E2841;     /* totals strip */
+      --row-stripe:     #fdf4ef;     /* even-row tint */
+      --row-divider:    #f0dccf;     /* between rows */
+      --text-primary:   #0E2841;
+      --text-secondary: #5a6b78;
+      --text-muted:     #8a98a3;
+
+      --sev-blocker:    #d8253b;
+      --sev-blocker-bg: #fce4e7;
+      --sev-blocker-br: #e88a96;
+
+      --sev-major:      #f08c1a;
+      --sev-major-bg:   #fff1dc;
+      --sev-major-br:   #f3b463;
+
+      --sev-minor:      #c9a227;
+      --sev-minor-bg:   #fbf3d6;
+      --sev-minor-br:   #d6bb55;
+
+      --sev-info:       #1f6dd6;
+      --sev-info-bg:    #e3eefb;
+      --sev-info-br:    #87aee6;
+
+      --verdict-go:     #1f8a4c;
+      --verdict-nogo:   #d8253b;
+    }
+
+    * { box-sizing: border-box; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+                   "Helvetica Neue", Arial, sans-serif;
+      color: var(--text-primary);
+      background: #ffffff;
+      margin: 0;
+      padding: 32px 40px;
+      line-height: 1.45;
+    }
+    .container { max-width: 1180px; margin: 0 auto; }
+
+    h1.report-title {
+      font-size: 28px; font-weight: 700; margin: 0 0 4px 0;
+    }
+    .report-subtitle {
+      font-size: 14px; color: var(--text-secondary); margin: 0 0 24px 0;
+    }
+
+    .meta-row {
+      display: flex; gap: 24px; flex-wrap: wrap;
+      font-size: 13px; color: var(--text-secondary);
+      margin-bottom: 32px; padding-bottom: 16px;
+      border-bottom: 1px solid var(--row-divider);
+    }
+    .meta-row strong { color: var(--text-primary); font-weight: 600; }
+
+    h2.section-title {
+      font-size: 22px; font-weight: 700;
+      margin: 36px 0 4px 0;
+    }
+    .section-sub {
+      font-size: 14px; color: var(--text-secondary);
+      margin: 0 0 18px 0;
+    }
+
+    /* Findings-by-category table */
+    table.findings-matrix {
+      width: 100%; border-collapse: separate; border-spacing: 0;
+      border-radius: 8px; overflow: hidden;
+      box-shadow: 0 1px 3px rgba(15,58,82,0.08);
+    }
+    table.findings-matrix thead th {
+      background: var(--header-blue);
+      color: #ffffff;
+      font-weight: 600; text-align: left;
+      padding: 16px 20px; font-size: 13px; letter-spacing: 0.02em;
+    }
+    table.findings-matrix thead th.sev-col {
+      text-align: center;
+    }
+    table.findings-matrix thead th.sev-col::before {
+      content: "● ";
+      color: rgba(255,255,255,0.55);
+      margin-right: 6px;
+    }
+    table.findings-matrix tbody td {
+      padding: 14px 20px;
+      border-bottom: 1px solid var(--row-divider);
+      font-size: 14px;
+      vertical-align: middle;
+    }
+    table.findings-matrix tbody tr:nth-child(even) td { background: var(--row-stripe); }
+    table.findings-matrix tbody tr:last-child td { border-bottom: none; }
+    table.findings-matrix .cat-name { font-weight: 700; }
+    table.findings-matrix .cat-sub  { font-weight: 400; color: var(--text-secondary); }
+    table.findings-matrix .num-cell { text-align: center; color: var(--text-secondary); }
+
+    /* Severity pills (cell-level) */
+    .pill {
+      display: inline-flex; align-items: center; justify-content: center;
+      min-width: 28px; height: 26px; padding: 0 10px;
+      border-radius: 999px; font-weight: 700; font-size: 13px;
+      border: 1.5px solid transparent;
+    }
+    .pill-blocker { background: var(--sev-blocker-bg); color: var(--sev-blocker); border-color: var(--sev-blocker-br); }
+    .pill-major   { background: var(--sev-major-bg);   color: var(--sev-major);   border-color: var(--sev-major-br); }
+    .pill-minor   { background: var(--sev-minor-bg);   color: var(--sev-minor);   border-color: var(--sev-minor-br); }
+    .pill-info    { background: var(--sev-info-bg);    color: var(--sev-info);    border-color: var(--sev-info-br); }
+
+    /* Totals strip (solid pills on navy band) */
+    tfoot.totals tr td {
+      background: var(--footer-navy);
+      color: #ffffff;
+      padding: 16px 20px;
+      font-size: 15px; font-weight: 700;
+    }
+    tfoot.totals .total-pill {
+      display: inline-flex; align-items: center; justify-content: center;
+      min-width: 44px; height: 30px; padding: 0 14px;
+      border-radius: 999px; font-weight: 700; font-size: 15px; color: #ffffff;
+    }
+    .total-blocker { background: var(--sev-blocker); }
+    .total-major   { background: var(--sev-major);   }
+    .total-minor   { background: var(--sev-minor);   }
+    .total-info    { background: var(--sev-info);    }
+
+    .verdict-line {
+      margin-top: 20px;
+      font-size: 15px; font-weight: 700;
+    }
+    .verdict-tag {
+      font-weight: 800;
+    }
+    .verdict-tag.go    { color: var(--verdict-go); }
+    .verdict-tag.nogo  { color: var(--verdict-nogo); }
+
+    .formula-line {
+      margin-top: 6px;
+      font-size: 13px; font-style: italic; color: var(--text-secondary);
+    }
+
+    /* Findings list */
+    .finding {
+      border: 1px solid var(--row-divider);
+      border-left: 4px solid var(--text-muted);
+      border-radius: 6px;
+      padding: 14px 18px;
+      margin: 12px 0;
+      background: #ffffff;
+    }
+    .finding.blocker { border-left-color: var(--sev-blocker); }
+    .finding.major   { border-left-color: var(--sev-major); }
+    .finding.minor   { border-left-color: var(--sev-minor); }
+    .finding.info    { border-left-color: var(--sev-info); }
+
+    .finding-head {
+      display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
+      margin-bottom: 6px;
+    }
+    .finding-rule {
+      font-family: "SFMono-Regular", Consolas, Monaco, monospace;
+      font-size: 12px; font-weight: 600;
+      background: #eef2f5; padding: 2px 8px; border-radius: 4px;
+      color: var(--text-primary);
+    }
+    .finding-loc {
+      font-size: 12px; color: var(--text-secondary);
+    }
+    .finding-summary {
+      font-weight: 600; font-size: 14px; color: var(--text-primary);
+    }
+    .finding-body {
+      font-size: 13px; color: var(--text-primary);
+      margin-top: 8px;
+    }
+    .finding-body p { margin: 6px 0; }
+    .finding-body pre {
+      background: #f5f8fa;
+      border: 1px solid var(--row-divider);
+      border-radius: 4px;
+      padding: 10px 12px;
+      font-size: 12px; overflow-x: auto;
+      font-family: "SFMono-Regular", Consolas, Monaco, monospace;
+    }
+
+    footer.page-footer {
+      margin-top: 48px; padding-top: 16px;
+      border-top: 1px solid var(--row-divider);
+      font-size: 12px; color: var(--text-muted);
+      display: flex; justify-content: space-between; flex-wrap: wrap; gap: 16px;
+    }
+    /* Jasmine Conseil charter (v1.4.2) */
+    body { font-family: Calibri, "Segoe UI", -apple-system, BlinkMacSystemFont, Roboto, Arial, sans-serif; }
+    .jc-brand {
+      display: flex; align-items: center; justify-content: space-between;
+      margin: -32px -40px 28px -40px; padding: 18px 40px 14px 40px;
+      border-top: 8px solid #E97132;
+      background: linear-gradient(90deg, #fdf0e8 0%, #ffffff 70%);
+      border-bottom: 1px solid var(--row-divider);
+    }
+    .jc-logo { display: flex; align-items: center; gap: 12px; }
+    .rv-logo { flex: none; display: block; }
+    .rv-name { font-size: 22px; font-weight: 700; color: #0E2841; line-height: 1.1; }
+    .rv-sub { font-size: 12px; color: var(--text-secondary); letter-spacing: .3px; }
+    .jc-tag { font-size: 12px; color: var(--text-secondary); }
+    .api-card { border: 1px solid var(--row-divider); border-left: 4px solid #E97132; border-radius: 8px; padding: 18px 22px; background: #fffaf7; }
+    .api-head { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+    .api-title { font-size: 18px; font-weight: 700; color: #0E2841; }
+    .api-pill { font-size: 12px; font-weight: 700; padding: 2px 10px; border-radius: 999px; background: #0E2841; color: #fff; }
+    .api-pill.layer { background: #fdebe0; color: #b4531c; }
+    .api-desc { margin: 10px 0 14px 0; color: var(--text-secondary); font-size: 14px; }
+    .api-facts { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 8px 24px; margin: 0 0 14px 0; }
+    .api-facts dt { font-size: 11px; text-transform: uppercase; letter-spacing: .6px; color: var(--text-muted); }
+    .api-facts dd { margin: 2px 0 0 0; font-size: 14px; word-break: break-word; }
+    table.api-ops { width: 100%; border-collapse: collapse; font-size: 13px; }
+    table.api-ops th { text-align: left; font-size: 11px; text-transform: uppercase; letter-spacing: .6px; color: var(--text-muted); border-bottom: 1px solid var(--row-divider); padding: 6px 8px; }
+    table.api-ops td { border-bottom: 1px solid var(--row-divider); padding: 6px 8px; vertical-align: top; }
+    .api-verb { font-family: "SFMono-Regular", Consolas, monospace; font-weight: 700; color: #E97132; }
+    .rv-links a { color: #0E2841; text-decoration: none; border-bottom: 1px solid #E97132; }
+    .jc-word { font-weight: 700; color: #E97132; font-size: 15px; }
+    .jc-word span { color: #0E2841; font-size: 10px; letter-spacing: 2px; margin-left: 3px; }
+    h1.report-title { color: #0E2841; }
+    h2.section-title { color: #0E2841; border-left: 4px solid #E97132; padding-left: 10px; }
+  </style>
+</head>
+<body>
+  <div class="container">
+
+  <div class="jc-brand">
+    <div class="jc-logo"><img class="rv-logo" width="44" height="44" alt="RAML Validator logo" src="data:image/png;base64,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">
+      <div><div class="rv-name">RAML Validator</div><div class="rv-sub">for MuleSoft &middot; API-Led Connectivity</div></div>
+    </div>
+    <div class="jc-tag">mulesoft-raml-validator v1.4.2 &middot; by <span class="jc-word">Jasmine<span>CONSEIL</span></span></div>
+  </div>
+
+    <h1 class="report-title">RAML Audit Report — Leave Management API</h1>
+    <p class="report-subtitle">MuleSoft RAML 1.0 production-readiness audit</p>
+
+    <div class="meta-row">
+      <span><strong>Spec:</strong> leave-management-api.raml</span>
+      <span><strong>Audit date:</strong> 2026-10-25</span>
+      <span><strong>Skill:</strong> mulesoft-raml-validator v1.4.2</span>
+      <span><strong>Score:</strong> 26 / 100</span>
+      <span><strong>Verdict:</strong>
+        <span class="verdict-tag nogo">
+          NO-GO
+        </span>
+      </span>
+    </div>
+
+    
+    
+    <h2 class="section-title">API under audit</h2>
+    <p class="section-sub">As declared in the specification.</p>
+    <div class="api-card">
+      <div class="api-head">
+        <span class="api-title">Leave Management API</span>
+        <span class="api-pill">v1.0.3</span>
+        <span class="api-pill layer">Layer not declared</span>
+      </div>
+      <p class="api-desc">Employee leave management. Employees submit leave requests (paid, sick or
+unpaid) and follow their status; managers approve them; everyone can check
+the remaining leave balance of an employee.</p>
+      <dl class="api-facts">
+        <div><dt>Base URI</dt><dd>https://api.demo.jasmineconseil.com/leaves</dd></div>
+        <div><dt>Media type</dt><dd>application/json</dd></div>
+        <div><dt>Resources</dt><dd>6</dd></div>
+        <div><dt>Operations</dt><dd>6 (3 GET, 2 POST, 1 PUT)</dd></div>
+        <div><dt>Security</dt><dd>none declared</dd></div>
+        <div><dt>Types · Traits</dt><dd>LeaveRequest · —</dd></div>
+      </dl>
+      
+      <table class="api-ops">
+        <thead><tr><th>Method</th><th>Path</th><th>Description</th></tr></thead>
+        <tbody>
+        
+          <tr><td><span class="api-verb">GET</span></td><td><code>/leaveRequests</code></td><td>List leave requests.</td></tr>
+        
+          <tr><td><span class="api-verb">POST</span></td><td><code>/leaveRequests</code></td><td>Submit a leave request.</td></tr>
+        
+          <tr><td><span class="api-verb">GET</span></td><td><code>/leaveRequests/{requestId}</code></td><td>—</td></tr>
+        
+          <tr><td><span class="api-verb">POST</span></td><td><code>/leaveRequests/{requestId}/approve</code></td><td>Approve a submitted leave request.</td></tr>
+        
+          <tr><td><span class="api-verb">GET</span></td><td><code>/employee/{employeeId}/balance</code></td><td>—</td></tr>
+        
+          <tr><td><span class="api-verb">PUT</span></td><td><code>/users/{userId}/password</code></td><td>—</td></tr>
+        
+        </tbody>
+      </table>
+      
+    </div>
+    
+
+    <h2 class="section-title">Findings by category &amp; severity</h2>
+    <p class="section-sub">Audit result &mdash; 2 blockers, 8 majors, 2 minors, 4 informational findings.</p>
+
+    <table class="findings-matrix">
+      <thead>
+        <tr>
+          <th>Category</th>
+          <th class="sev-col">BLOCKER</th>
+          <th class="sev-col">MAJOR</th>
+          <th class="sev-col">MINOR</th>
+          <th class="sev-col">INFO</th>
+        </tr>
+      </thead>
+      <tbody>
+        
+        <tr>
+          <td>
+            <span class="cat-name">Naming</span>
+            
+          </td>
+          
+            <td class="num-cell">
+              
+                0
+              
+            </td>
+          
+            <td class="num-cell">
+              
+                <span class="pill pill-major">3</span>
+              
+            </td>
+          
+            <td class="num-cell">
+              
+                <span class="pill pill-minor">1</span>
+              
+            </td>
+          
+            <td class="num-cell">
+              
+                0
+              
+            </td>
+          
+        </tr>
+        
+        <tr>
+          <td>
+            <span class="cat-name">API-Led Connectivity</span>
+            
+          </td>
+          
+            <td class="num-cell">
+              
+                0
+              
+            </td>
+          
+            <td class="num-cell">
+              
+                0
+              
+            </td>
+          
+            <td class="num-cell">
+              
+                0
+              
+            </td>
+          
+            <td class="num-cell">
+              
+                <span class="pill pill-info">1</span>
+              
+            </td>
+          
+        </tr>
+        
+        <tr>
+          <td>
+            <span class="cat-name">Reuse</span>
+            <span class="cat-sub"> (traits / resourceTypes)</span>
+          </td>
+          
+            <td class="num-cell">
+              
+                0
+              
+            </td>
+          
+            <td class="num-cell">
+              
+                <span class="pill pill-major">1</span>
+              
+            </td>
+          
+            <td class="num-cell">
+              
+                0
+              
+            </td>
+          
+            <td class="num-cell">
+              
+                0
+              
+            </td>
+          
+        </tr>
+        
+        <tr>
+          <td>
+            <span class="cat-name">Spec</span>
+            <span class="cat-sub"> (examples / schemas)</span>
+          </td>
+          
+            <td class="num-cell">
+              
+                <span class="pill pill-blocker">1</span>
+              
+            </td>
+          
+            <td class="num-cell">
+              
+                <span class="pill pill-major">2</span>
+              
+            </td>
+          
+            <td class="num-cell">
+              
+                0
+              
+            </td>
+          
+            <td class="num-cell">
+              
+                0
+              
+            </td>
+          
+        </tr>
+        
+        <tr>
+          <td>
+            <span class="cat-name">Security</span>
+            
+          </td>
+          
+            <td class="num-cell">
+              
+                <span class="pill pill-blocker">1</span>
+              
+            </td>
+          
+            <td class="num-cell">
+              
+                <span class="pill pill-major">1</span>
+              
+            </td>
+          
+            <td class="num-cell">
+              
+                0
+              
+            </td>
+          
+            <td class="num-cell">
+              
+                <span class="pill pill-info">1</span>
+              
+            </td>
+          
+        </tr>
+        
+        <tr>
+          <td>
+            <span class="cat-name">Versioning</span>
+            
+          </td>
+          
+            <td class="num-cell">
+              
+                0
+              
+            </td>
+          
+            <td class="num-cell">
+              
+                <span class="pill pill-major">1</span>
+              
+            </td>
+          
+            <td class="num-cell">
+              
+                0
+              
+            </td>
+          
+            <td class="num-cell">
+              
+                <span class="pill pill-info">1</span>
+              
+            </td>
+          
+        </tr>
+        
+        <tr>
+          <td>
+            <span class="cat-name">Documentation</span>
+            
+          </td>
+          
+            <td class="num-cell">
+              
+                0
+              
+            </td>
+          
+            <td class="num-cell">
+              
+                0
+              
+            </td>
+          
+            <td class="num-cell">
+              
+                <span class="pill pill-minor">1</span>
+              
+            </td>
+          
+            <td class="num-cell">
+              
+                <span class="pill pill-info">1</span>
+              
+            </td>
+          
+        </tr>
+        
+      </tbody>
+      <tfoot class="totals">
+        <tr>
+          <td>Totals</td>
+          <td class="num-cell"><span class="total-pill total-blocker">2</span></td>
+          <td class="num-cell"><span class="total-pill total-major">8</span></td>
+          <td class="num-cell"><span class="total-pill total-minor">2</span></td>
+          <td class="num-cell"><span class="total-pill total-info">4</span></td>
+        </tr>
+      </tfoot>
+    </table>
+
+    <p class="verdict-line">
+      Total: 16 findings &mdash; verdict:
+      <span class="verdict-tag nogo">
+        NO-GO
+      </span>
+    </p>
+    <p class="formula-line">
+      Score formula: 100 &minus; (15 &times; BLOCKER) &minus; (5 &times; MAJOR) &minus; (2 &times; MINOR) &minus; (0 &times; INFO),
+      floored at 0. GO requires score &ge; 80 AND zero blockers.
+    </p>
+
+    
+    <h2 class="section-title">Detailed findings</h2>
+    <p class="section-sub">Ordered by severity, then by rule ID.</p>
+    
+      <div class="finding blocker">
+        <div class="finding-head">
+          <span class="pill pill-blocker">BLOCKER</span>
+          <span class="finding-rule">SEC-001</span>
+          <span class="finding-loc">root</span>
+        </div>
+        <div class="finding-summary">No securitySchemes and no root securedBy: — API is fully open.</div>
+        
+          <div class="finding-body"><p><strong>Impact:</strong> Any client can call any endpoint. Hard fail for any non-public API.</p>
+<pre>securitySchemes:
+  oauth_2_0:
+    type: OAuth 2.0
+    settings:
+      authorizationUri: https://auth.example.com/oauth/authorize
+      accessTokenUri: https://auth.example.com/oauth/token
+      authorizationGrants: [ authorization_code, client_credentials ]
+
+securedBy: [ oauth_2_0 ]</pre></div>
+        
+      </div>
+    
+      <div class="finding blocker">
+        <div class="finding-head">
+          <span class="pill pill-blocker">BLOCKER</span>
+          <span class="finding-rule">SPEC-003</span>
+          <span class="finding-loc">GET /leaveRequests (missing [400, 401, 404, 500]); POST /leaveRequests (missing [401, 404, 500]); GET /leaveRequests/{requestId} (missing [400, 401, 500]) (+3 more)</span>
+        </div>
+        <div class="finding-summary">6 methods do not declare the full required error set (400/401/404/500).</div>
+        
+          <div class="finding-body"><p><strong>Impact:</strong> Consumers have no contract for failure modes. Code generation, mocking, and MUnit are all impacted.</p>
+<pre>traits:
+  standardErrors:
+    responses:
+      400: { body: { application/json: { type: ErrorResponse } } }
+      401: { body: { application/json: { type: ErrorResponse } } }
+      404: { body: { application/json: { type: ErrorResponse } } }
+      500: { body: { application/json: { type: ErrorResponse } } }</pre></div>
+        
+      </div>
+    
+      <div class="finding major">
+        <div class="finding-head">
+          <span class="pill pill-major">MAJOR</span>
+          <span class="finding-rule">NAMING-001</span>
+          <span class="finding-loc">/leaveRequests</span>
+        </div>
+        <div class="finding-summary">Resource segment 'leaveRequests' is not kebab-case.</div>
+        
+          <div class="finding-body"><p><strong>Impact:</strong> Inconsistent URL ergonomics and against MuleSoft naming guidance.</p>
+<pre># rename to kebab-case, e.g.
+# /leaveRequests  →  /leave-requests</pre></div>
+        
+      </div>
+    
+      <div class="finding major">
+        <div class="finding-head">
+          <span class="pill pill-major">MAJOR</span>
+          <span class="finding-rule">NAMING-002</span>
+          <span class="finding-loc">/employee</span>
+        </div>
+        <div class="finding-summary">Resource segment 'employee' looks singular; collection resources must be plural nouns.</div>
+        
+          <div class="finding-body"><p><strong>Impact:</strong> Singular collection names confuse REST consumers expecting list semantics.</p>
+<p><strong>Remediation:</strong> Rename &#x27;employee&#x27; to its plural form.</p></div>
+        
+      </div>
+    
+      <div class="finding major">
+        <div class="finding-head">
+          <span class="pill pill-major">MAJOR</span>
+          <span class="finding-rule">NAMING-004</span>
+          <span class="finding-loc">title</span>
+        </div>
+        <div class="finding-summary">Title 'Leave Management API' does not follow the s-/p-/x- layer convention.</div>
+        
+          <div class="finding-body"><p><strong>Impact:</strong> API-Led catalogs sort and filter by layer prefix; this API will not be discoverable as System / Process / Experience in Anypoint Exchange.</p>
+<pre>title: s-customer-orders-api    # System layer
+# or
+title: p-order-management-api  # Process layer
+# or
+title: x-web-orders-api        # Experience layer</pre></div>
+        
+      </div>
+    
+      <div class="finding major">
+        <div class="finding-head">
+          <span class="pill pill-major">MAJOR</span>
+          <span class="finding-rule">REUSE-001</span>
+          <span class="finding-loc">GET /leaveRequests, GET /employee/{employeeId}/balance</span>
+        </div>
+        <div class="finding-summary">Pagination duplicated on 2 resources without a trait.</div>
+        
+          <div class="finding-body"><p><strong>Impact:</strong> Future pagination changes (defaults, max page size, link headers) require editing every resource.</p>
+<pre>traits:
+  pageable:
+    queryParameters:
+      page:     { type: integer, default: 1, minimum: 1 }
+      pageSize: { type: integer, default: 25, minimum: 1, maximum: 100 }
+
+/customer-orders:
+  get:
+    is: [ pageable ]</pre></div>
+        
+      </div>
+    
+      <div class="finding major">
+        <div class="finding-head">
+          <span class="pill pill-major">MAJOR</span>
+          <span class="finding-rule">SEC-002</span>
+          <span class="finding-loc">PUT /users/{userId}/password</span>
+        </div>
+        <div class="finding-summary">1 sensitive endpoint(s) lack an explicit securedBy: with a narrow scope.</div>
+        
+          <div class="finding-body"><p><strong>Impact:</strong> Sensitive routes (payment, auth, password, credentials) should declare a method-specific scope, not inherit the root scope.</p>
+<pre>/users/{userId}/password:
+  put:
+    securedBy:
+      - oauth_2_0: { scopes: [ &quot;users:credentials:write&quot; ] }</pre></div>
+        
+      </div>
+    
+      <div class="finding major">
+        <div class="finding-head">
+          <span class="pill pill-major">MAJOR</span>
+          <span class="finding-rule">SPEC-001</span>
+          <span class="finding-loc">POST /leaveRequests (application/json)</span>
+        </div>
+        <div class="finding-summary">1 request bodies have no inline example.</div>
+        
+          <div class="finding-body"><p><strong>Impact:</strong> Mocking Service, API Designer &#x27;Try it&#x27;, and consumer SDK generators all rely on `example`.</p>
+<pre>post:
+  body:
+    application/json:
+      type: CustomerOrderRequest
+      example:
+        customerId: &quot;CUST-00042&quot;
+        items: [ { sku: &quot;SKU-001&quot;, quantity: 2 } ]</pre></div>
+        
+      </div>
+    
+      <div class="finding major">
+        <div class="finding-head">
+          <span class="pill pill-major">MAJOR</span>
+          <span class="finding-rule">SPEC-002</span>
+          <span class="finding-loc">GET /leaveRequests → 200 (application/json); GET /leaveRequests/{requestId} → 200 (application/json); POST /leaveRequests/{requestId}/approve → 200 (application/json)</span>
+        </div>
+        <div class="finding-summary">3 response bodies have no inline example per status code.</div>
+        
+          <div class="finding-body"><p><strong>Impact:</strong> Consumers cannot stub or mock against the contract.</p></div>
+        
+      </div>
+    
+      <div class="finding major">
+        <div class="finding-head">
+          <span class="pill pill-major">MAJOR</span>
+          <span class="finding-rule">VER-002</span>
+          <span class="finding-loc">baseUri</span>
+        </div>
+        <div class="finding-summary">{version} placeholder is not interpolated in baseUri.</div>
+        
+          <div class="finding-body"><p><strong>Impact:</strong> Consumers cannot pin to a major version via the URL; parallel rollout (v1 → v2) is impossible.</p>
+<pre>baseUri: https://api.example.com/customer-orders/{version}</pre></div>
+        
+      </div>
+    
+      <div class="finding minor">
+        <div class="finding-head">
+          <span class="pill pill-minor">MINOR</span>
+          <span class="finding-rule">DOC-002</span>
+          <span class="finding-loc">/leaveRequests; /leaveRequests/{requestId}; /leaveRequests/{requestId}/approve; /employee; /employee/{employeeId}/balance (+1 more)</span>
+        </div>
+        <div class="finding-summary">6 resources have no description: field.</div>
+        
+          <div class="finding-body"><p><strong>Remediation:</strong> Add a one-line description on every resource.</p></div>
+        
+      </div>
+    
+      <div class="finding minor">
+        <div class="finding-head">
+          <span class="pill pill-minor">MINOR</span>
+          <span class="finding-rule">NAMING-003</span>
+          <span class="finding-loc">GET /leaveRequests?page_size; GET /employee/{employeeId}/balance?page_size</span>
+        </div>
+        <div class="finding-summary">2 occurrences — Query parameter 'page_size' is not camelCase.</div>
+        
+          <div class="finding-body"><pre>queryParameters:
+  pageSize:
+    type: string</pre></div>
+        
+      </div>
+    
+      <div class="finding info">
+        <div class="finding-head">
+          <span class="pill pill-info">INFO</span>
+          <span class="finding-rule">APIC-003</span>
+          <span class="finding-loc">title</span>
+        </div>
+        <div class="finding-summary">Title should start with the layer prefix (s-/p-/x-) for instant identification.</div>
+        
+      </div>
+    
+      <div class="finding info">
+        <div class="finding-head">
+          <span class="pill pill-info">INFO</span>
+          <span class="finding-rule">DOC-003</span>
+          <span class="finding-loc">root</span>
+        </div>
+        <div class="finding-summary">No documentation: section with onboarding guide.</div>
+        
+          <div class="finding-body"><pre>documentation:
+  - title: Overview
+    content: |
+      This API exposes ...
+  - title: Getting started
+    content: !include docs/getting-started.md</pre></div>
+        
+      </div>
+    
+      <div class="finding info">
+        <div class="finding-head">
+          <span class="pill pill-info">INFO</span>
+          <span class="finding-rule">SEC-003</span>
+          <span class="finding-loc">n/a</span>
+        </div>
+        <div class="finding-summary">Once authentication is added, prefer OAuth 2.0 over basic auth.</div>
+        
+      </div>
+    
+      <div class="finding info">
+        <div class="finding-head">
+          <span class="pill pill-info">INFO</span>
+          <span class="finding-rule">VER-003</span>
+          <span class="finding-loc">version: v1.0.3</span>
+        </div>
+        <div class="finding-summary">Use semantic versioning (v1, v2) in the URI; reserve patch/minor for the changelog.</div>
+        
+          <div class="finding-body"><pre>version: v1   # patch level v1.2.3 belongs in changelogs/headers</pre></div>
+        
+      </div>
+    
+    
+
+    <footer class="page-footer">
+      <span>Generated by mulesoft-raml-validator v1.4.2</span>
+      <span>2026-10-25</span>
+      <span class="rv-links"><a href="https://github.com/karimdjaafar/mulesoft-raml-validator" target="_blank" rel="noopener">Project</a> &middot; <a href="https://github.com/karimdjaafar/mulesoft-raml-validator/blob/main/docs/DEVELOPER-GUIDE.md" target="_blank" rel="noopener">Developer guide</a> &middot; <a href="https://github.com/karimdjaafar/mulesoft-raml-validator/issues/new/choose" target="_blank" rel="noopener">Feedback</a> &middot; Contact: <a href="mailto:kdjaafar@jasmineconseil.com?subject=RAML%20Validator" target="_blank" rel="noopener">kdjaafar@jasmineconseil.com</a></span>
+      <span style="color:#E97132">&copy; 2026 Jasmine Conseil</span>
+    </footer>
+
+  </div>
+</body>
+</html>

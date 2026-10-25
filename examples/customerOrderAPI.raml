@@ -3,9 +3,7 @@ title: customerOrderAPI
 version: v1.2.3
 baseUri: https://api.jasmine-conseil.com/customer-orders
 mediaType: application/json
-
 description: API for orders.
-
 /customerOrders:
   get:
     queryParameters:
@@ -29,7 +27,6 @@ description: API for orders.
         body:
           application/json:
             type: object
-
   /{orderId}:
     get:
       responses:
@@ -37,7 +34,6 @@ description: API for orders.
           body:
             application/json:
               type: object
-
 /payment-process:
   post:
     body:
@@ -48,7 +44,6 @@ description: API for orders.
         body:
           application/json:
             type: object
-
 /users:
   get:
     queryParameters:

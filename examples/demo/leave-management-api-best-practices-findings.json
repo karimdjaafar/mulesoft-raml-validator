@@ -1,0 +1,68 @@
+{
+  "title": "RAML Audit Report \u2014 s-leave-management-api",
+  "subtitle": "MuleSoft RAML 1.0 production-readiness audit",
+  "spec_path": "leave-management-api-best-practices.raml",
+  "date": "2026-10-25",
+  "skill_version": "mulesoft-raml-validator v1.4.2",
+  "score": 100,
+  "verdict": "GO",
+  "findings": [],
+  "api": {
+    "title": "s-leave-management-api",
+    "version": "v1",
+    "base_uri": "https://api.demo.jasmineconseil.com/leaves/{version}",
+    "media_type": "application/json",
+    "layer": "system",
+    "description": "Employee leave management. Employees submit leave requests (paid, sick or\nunpaid) and follow their status; managers approve them; everyone can check\nthe remaining leave balance of an employee.",
+    "resources": 6,
+    "operations": 6,
+    "methods": {
+      "GET": 3,
+      "POST": 2,
+      "PUT": 1
+    },
+    "operation_list": [
+      {
+        "method": "GET",
+        "path": "/leave-requests",
+        "description": "List leave requests."
+      },
+      {
+        "method": "POST",
+        "path": "/leave-requests",
+        "description": "Submit a leave request."
+      },
+      {
+        "method": "GET",
+        "path": "/leave-requests/{requestId}",
+        "description": ""
+      },
+      {
+        "method": "POST",
+        "path": "/leave-requests/{requestId}/approve",
+        "description": "Approve a submitted leave request."
+      },
+      {
+        "method": "GET",
+        "path": "/employees/{employeeId}/balance",
+        "description": ""
+      },
+      {
+        "method": "PUT",
+        "path": "/users/{userId}/password",
+        "description": ""
+      }
+    ],
+    "security_schemes": [
+      "oauth_2_0"
+    ],
+    "types": [
+      "ErrorResponse",
+      "LeaveRequest"
+    ],
+    "traits": [
+      "pageable",
+      "standardErrors"
+    ]
+  }
+}

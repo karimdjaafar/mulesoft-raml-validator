@@ -1,0 +1,137 @@
+{
+  "title": "Remediation guide \u2014 s-leave-management-api",
+  "source_raml": "leave-management-api.raml",
+  "refactored_raml": "leave-management-api-best-practices.raml",
+  "date": "2026-10-25",
+  "skill_version": "mulesoft-raml-validator v1.4.2",
+  "inferred_layer": "s",
+  "layer_reasoning": "Default to System (s-) layer for noun-shaped resource specs; consider 'p-' or 'x-' if the API orchestrates or serves a specific channel",
+  "transformations": [
+    {
+      "rule": "NAMING-001",
+      "kind": "mechanical",
+      "before": "/leaveRequests",
+      "after": "/leave-requests",
+      "reasoning": "Resource paths must be kebab-case (lowercase, hyphen-separated).",
+      "confidence": "high"
+    },
+    {
+      "rule": "NAMING-002",
+      "kind": "mechanical",
+      "before": "/employee",
+      "after": "/employees",
+      "reasoning": "Collection resources must be plural nouns.",
+      "confidence": "high"
+    },
+    {
+      "rule": "NAMING-003",
+      "kind": "mechanical",
+      "before": "GET /leave-requests?page_size",
+      "after": "GET /leave-requests?pageSize",
+      "reasoning": "Query parameters must be camelCase.",
+      "confidence": "high"
+    },
+    {
+      "rule": "NAMING-003",
+      "kind": "mechanical",
+      "before": "GET /employees/{employeeId}/balance?page_size",
+      "after": "GET /employees/{employeeId}/balance?pageSize",
+      "reasoning": "Query parameters must be camelCase.",
+      "confidence": "high"
+    },
+    {
+      "rule": "NAMING-004",
+      "kind": "heuristic",
+      "before": "title: Leave Management API",
+      "after": "title: s-leave-management-api",
+      "reasoning": "Layer inferred: 's-'. Default to System (s-) layer for noun-shaped resource specs; consider 'p-' or 'x-' if the API orchestrates or serves a specific channel",
+      "confidence": "medium"
+    },
+    {
+      "rule": "VER-002",
+      "kind": "mechanical",
+      "before": "baseUri: https://api.demo.jasmineconseil.com/leaves",
+      "after": "baseUri: https://api.demo.jasmineconseil.com/leaves/{version}",
+      "reasoning": "Version placeholder interpolated so consumers can pin to a major version via the URL.",
+      "confidence": "high"
+    },
+    {
+      "rule": "VER-003",
+      "kind": "mechanical",
+      "before": "version: v1.0.3",
+      "after": "version: v1",
+      "reasoning": "URI version reduced to major level; patch/minor levels belong in the changelog and response headers, not the URL.",
+      "confidence": "high"
+    },
+    {
+      "rule": "DOC-002",
+      "kind": "mechanical",
+      "before": "6 resources without description",
+      "after": "all 6 resources now have a one-line description",
+      "reasoning": "Auto-generated descriptions; edit them to capture domain-specific intent.",
+      "confidence": "high"
+    },
+    {
+      "rule": "DOC-003",
+      "kind": "heuristic",
+      "before": "(no documentation section)",
+      "after": "documentation: [Overview, Getting started, Error model]",
+      "reasoning": "Skeleton documentation section added with three standard chapters. Edit each chapter to add domain-specific content.",
+      "confidence": "medium"
+    },
+    {
+      "rule": "SEC-001",
+      "kind": "heuristic",
+      "before": "(no securitySchemes, no root securedBy)",
+      "after": "OAuth 2.0 scheme + root securedBy: [ oauth_2_0 ]",
+      "reasoning": "OAuth 2.0 added with placeholder authorization/token URIs. Replace these with the real identity-provider URLs before deploying.",
+      "confidence": "medium"
+    },
+    {
+      "rule": "SPEC-003",
+      "kind": "mechanical",
+      "before": "No 4xx/5xx responses defined on any endpoint",
+      "after": "standardErrors trait defined and applied to 6 methods",
+      "reasoning": "Single trait defining 400/401/403/404/429/500 ensures every method has a complete error contract.",
+      "confidence": "high"
+    },
+    {
+      "rule": "REUSE-001",
+      "kind": "mechanical",
+      "before": "2 GET methods with inline page/pageSize",
+      "after": "pageable trait defined and applied to 2 methods",
+      "reasoning": "Pagination parameters factored into a single reusable trait; future changes to defaults or limits propagate everywhere.",
+      "confidence": "high"
+    },
+    {
+      "rule": "SPEC-001",
+      "kind": "heuristic",
+      "before": "1 request bodies without example",
+      "after": "placeholder examples added to 1 request bodies",
+      "reasoning": "Generic placeholder examples added; replace with realistic domain-specific values to make Mocking Service useful.",
+      "confidence": "low"
+    },
+    {
+      "rule": "SPEC-002",
+      "kind": "heuristic",
+      "before": "3 response bodies without example",
+      "after": "placeholder examples added to 3 response bodies",
+      "reasoning": "Generic placeholder examples added; replace with realistic domain-specific values.",
+      "confidence": "low"
+    },
+    {
+      "rule": "SEC-002",
+      "kind": "heuristic",
+      "before": "1 sensitive endpoints with no per-method securedBy",
+      "after": "PUT /users/{userId}/password \u2192 scope 'users:credentials:write'",
+      "reasoning": "Scoped securedBy added per sensitive endpoint with a narrow scope inferred from the path. Verify the scope name matches your identity-provider configuration.",
+      "confidence": "medium"
+    }
+  ],
+  "transformation_count": 15,
+  "transformation_kinds": {
+    "mechanical": 9,
+    "heuristic": 6,
+    "architectural": 0
+  }
+}

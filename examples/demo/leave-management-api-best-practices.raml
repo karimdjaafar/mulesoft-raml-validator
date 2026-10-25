@@ -1,0 +1,247 @@
+#%RAML 1.0
+title: s-leave-management-api
+version: v1
+baseUri: https://api.demo.jasmineconseil.com/leaves/{version}
+mediaType: application/json
+description: |
+  Employee leave management. Employees submit leave requests (paid, sick or
+  unpaid) and follow their status; managers approve them; everyone can check
+  the remaining leave balance of an employee.
+types:
+  LeaveRequest:
+    type: object
+    properties:
+      requestId: string
+      employeeId: string
+      type:
+        enum:
+        - PAID
+        - SICK
+        - UNPAID
+      startDate: date-only
+      endDate: date-only
+      status:
+        enum:
+        - DRAFT
+        - SUBMITTED
+        - APPROVED
+        - REJECTED
+  ErrorResponse:
+    type: object
+    properties:
+      code:
+        type: string
+        example: VALIDATION_ERROR
+      message:
+        type: string
+        example: Field 'foo' is required
+      traceId:
+        type: string
+        example: 8c7e1f6a-3d2b-4c5e-9a1b-7f3d4c5e9a1b
+/leave-requests:
+  description: Operations on the leave requests resource.
+  get:
+    description: List leave requests.
+    queryParameters:
+      status:
+        type: string
+        required: false
+    responses:
+      200:
+        body:
+          application/json:
+            type: LeaveRequest[]
+            example:
+              id: EXAMPLE-001
+              status: ACTIVE
+              createdAt: '2026-05-06T12:00:00Z'
+    is:
+    - pageable
+    - standardErrors
+  post:
+    description: Submit a leave request.
+    body:
+      application/json:
+        type: LeaveRequest
+        example:
+          id: EXAMPLE-001
+          status: ACTIVE
+          createdAt: '2026-05-06T12:00:00Z'
+    responses:
+      201:
+        body:
+          application/json:
+            type: LeaveRequest
+            example:
+              requestId: LR-2026-0042
+              employeeId: EMP-0007
+              type: PAID
+              startDate: 2026-12-21
+              endDate: 2026-12-31
+              status: SUBMITTED
+      400:
+        body:
+          application/json:
+            example:
+              code: VALIDATION_ERROR
+              message: endDate before startDate
+    is:
+    - standardErrors
+  /{requestId}:
+    description: Single resource identified by the requestId path parameter.
+    get:
+      responses:
+        200:
+          body:
+            application/json:
+              type: LeaveRequest
+              example:
+                id: EXAMPLE-001
+                status: ACTIVE
+                createdAt: '2026-05-06T12:00:00Z'
+        404:
+          body:
+            application/json:
+              example:
+                code: NOT_FOUND
+                message: Leave request not found
+      is:
+      - standardErrors
+    /approve:
+      description: Operations on the approve resource.
+      post:
+        description: Approve a submitted leave request.
+        responses:
+          200:
+            body:
+              application/json:
+                type: LeaveRequest
+                example:
+                  id: EXAMPLE-001
+                  status: ACTIVE
+                  createdAt: '2026-05-06T12:00:00Z'
+        is:
+        - standardErrors
+/employees:
+  description: Operations on the employees resource.
+  /{employeeId}/balance:
+    description: Operations on the {employeeId}/balance resource.
+    get:
+      responses:
+        200:
+          body:
+            application/json:
+              example:
+                employeeId: EMP-0007
+                paidDaysLeft: 12
+                sickDaysLeft: 5
+      is:
+      - pageable
+      - standardErrors
+/users/{userId}/password:
+  description: Operations on the users/{userId}/password resource.
+  put:
+    body:
+      application/json:
+        example:
+          newPassword: '********'
+    responses:
+      204: null
+    is:
+    - standardErrors
+    securedBy:
+    - oauth_2_0:
+        scopes:
+        - users:credentials:write
+documentation:
+- title: Overview
+  content: High-level description of the API. Edit this section to describe the API's purpose, scope, and ownership.
+- title: Getting started
+  content: How consumers should authenticate and call the API. Edit this section with concrete onboarding steps.
+- title: Error model
+  content: All errors follow the ErrorResponse schema. Codes are stable; messages are advisory.
+securitySchemes:
+  oauth_2_0:
+    type: OAuth 2.0
+    describedBy:
+      headers:
+        Authorization:
+          type: string
+          example: Bearer eyJhbGc...
+    settings:
+      authorizationUri: https://auth.example.com/oauth/authorize
+      accessTokenUri: https://auth.example.com/oauth/token
+      authorizationGrants:
+      - authorization_code
+      - client_credentials
+      scopes:
+      - employee:read
+      - employee:write
+      - leave_request:read
+      - leave_request:write
+      - user:read
+      - user:write
+securedBy:
+- oauth_2_0
+traits:
+  standardErrors:
+    responses:
+      '400':
+        body:
+          application/json:
+            type: ErrorResponse
+            example:
+              code: VALIDATION_ERROR
+              message: Example VALIDATION_ERROR message
+              traceId: 8c7e1f6a-3d2b-4c5e-9a1b-7f3d4c5e9a1b
+      '401':
+        body:
+          application/json:
+            type: ErrorResponse
+            example:
+              code: UNAUTHENTICATED
+              message: Example UNAUTHENTICATED message
+              traceId: 8c7e1f6a-3d2b-4c5e-9a1b-7f3d4c5e9a1b
+      '403':
+        body:
+          application/json:
+            type: ErrorResponse
+            example:
+              code: FORBIDDEN
+              message: Example FORBIDDEN message
+              traceId: 8c7e1f6a-3d2b-4c5e-9a1b-7f3d4c5e9a1b
+      '404':
+        body:
+          application/json:
+            type: ErrorResponse
+            example:
+              code: NOT_FOUND
+              message: Example NOT_FOUND message
+              traceId: 8c7e1f6a-3d2b-4c5e-9a1b-7f3d4c5e9a1b
+      '429':
+        body:
+          application/json:
+            type: ErrorResponse
+            example:
+              code: RATE_LIMITED
+              message: Example RATE_LIMITED message
+              traceId: 8c7e1f6a-3d2b-4c5e-9a1b-7f3d4c5e9a1b
+      '500':
+        body:
+          application/json:
+            type: ErrorResponse
+            example:
+              code: INTERNAL_ERROR
+              message: Example INTERNAL_ERROR message
+              traceId: 8c7e1f6a-3d2b-4c5e-9a1b-7f3d4c5e9a1b
+  pageable:
+    queryParameters:
+      page:
+        type: integer
+        default: 1
+        minimum: 1
+      pageSize:
+        type: integer
+        default: 25
+        minimum: 1
+        maximum: 100

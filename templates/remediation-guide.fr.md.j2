@@ -1,0 +1,105 @@
+# {{ title }}
+
+**RAML source :** `{{ source_raml }}`
+**RAML corrigé :** `{{ refactored_raml }}`
+**Généré le :** {{ date }}
+**Skill :** {{ skill_version }}
+
+{% if api %}
+
+**API auditée :** {{ api.title }}{% if api.version %} ({{ api.version }}){% endif %} — {{ api.layer if api.layer != 'unknown' else 'couche non déclarée' }}
+
+{% if api.description %}
+> {{ api.description | replace('\n', ' ') }}
+
+{% endif %}
+{{ api.resources }} ressources, {{ api.operations }} opérations · base URI `{{ api.base_uri or '—' }}`
+{% endif %}
+
+---
+
+## 1. Synthèse
+
+{% if starting_score is not none %}
+Ce guide décrit les transformations appliquées pour corriger le RAML source.
+L'audit initial comptait **{{ starting_findings }} constats** pour un score de
+**{{ starting_score }}/100**. Après ces transformations, le RAML corrigé doit
+obtenir **100/100** (à vérifier en relançant `audit_raml.py` sur le résultat).
+{% else %}
+Ce guide décrit les transformations appliquées pour corriger le RAML source.
+{% endif %}
+
+**{{ transformations | length }} transformations** au total :
+
+- {{ by_kind.mechanical | length }} **mécaniques** — corrections déterministes et sûres (renommages, mise en forme, insertions structurelles).
+- {{ by_kind.heuristic | length }} **heuristiques** — valeurs par défaut raisonnables, à relire (exemples provisoires, descriptions générées, URI par défaut).
+- {{ by_kind.architectural | length }} **architecturales** — choix de couche ou de nommage pour lesquels plusieurs réponses sont valables.
+
+**Couche API déduite :** `{{ inferred_layer }}-` — {{ layer_reasoning }}
+
+{% if needs_review %}
+> ⚠ **{{ needs_review | length }} transformation{{ 's' if needs_review|length != 1 else '' }}
+> à relire** (choix heuristiques ou architecturaux, ou résultats de confiance
+> faible). Chacune est signalée au §3.
+{% endif %}
+
+---
+
+## 2. Tableau des transformations
+
+| # | Règle | Type | Confiance | Résumé |
+|---|---|---|---|---|
+{% for t in transformations -%}
+| {{ loop.index }} | `{{ t.rule }}` | {{ kind_label[t.kind] }} | {{ confidence_label[t.confidence] }} | {{ t.before | truncate(50, true, '...') }} → {{ t.after | truncate(50, true, '...') }} |
+{% endfor %}
+
+---
+
+## 3. Transformations détaillées
+
+{% for t in transformations %}
+### {{ loop.index }}. `{{ t.rule }}` — {{ kind_label[t.kind] }} ({{ confidence_label[t.confidence] }})
+
+**Avant :**
+```
+{{ t.before }}
+```
+
+**Après :**
+```
+{{ t.after }}
+```
+
+**Justification :** {{ t.reasoning }}
+
+{% if t.kind == 'architectural' %}
+> 🏛 **Choix d'architecture.** Cette transformation applique un choix
+> raisonnable, mais d'autres sont valables. Vérifiez lequel convient à votre
+> contexte.
+{% elif t.kind == 'heuristic' or t.confidence == 'low' %}
+> 🔍 **À relire.** La valeur appliquée est générique ; remplacez-la par un
+> contenu métier avant la mise en production.
+{% endif %}
+
+---
+{% endfor %}
+
+## 4. Prochaines étapes
+
+1. **Relire le RAML corrigé** (`{{ refactored_raml }}`), en particulier les
+   {{ needs_review | length }} transformation{{ 's' if needs_review|length != 1 else '' }}
+   signalée{{ 's' if needs_review|length != 1 else '' }} au §3.
+2. **Remplacer les valeurs provisoires.** Les descriptions générées (DOC-001,
+   DOC-002, DOC-003), les URI d'authentification (SEC-001) et les exemples
+   (SPEC-001, SPEC-002) respectent les règles mais n'ont aucun sens métier.
+3. **Vérifier les noms de scopes** si SEC-002 a été appliquée. Le générateur les
+   déduit du chemin (par ex. `/users/{id}/password` → `users:credentials:write`) ;
+   ils doivent exister dans votre fournisseur d'identité.
+4. **Refaire l'audit du RAML corrigé** avec `scripts/audit_raml.py` pour
+   confirmer 100/100 GO. Tout autre résultat est un bug à signaler.
+5. **Enregistrer les deux fichiers ensemble** — le RAML corrigé et ce guide,
+   qui explique à chaque lecteur futur pourquoi chaque changement a été fait.
+
+---
+
+*Généré par {{ skill_version }} · {{ date }} · © 2026 Jasmine Conseil*

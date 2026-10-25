@@ -1,141 +1,260 @@
-# RAML Best Practices — Quick Reference
+# RAML best-practices cheat sheet
 
-> Cheat sheet for the 23 audit rules enforced by `mulesoft-raml-validator`.
-> Each rule has a stable ID, a severity, and a one-line definition. Use this
-> as a checklist during RAML authoring or a glossary while reading audit
-> reports.
+> Internal reference for the `mulesoft-raml-validator` skill.
+> Consulted at workflow step §5.2 before producing an audit.
+> **Source of truth for rule IDs is `SKILL.md` §2.** This file is a
+> condensed lookup, not a redefinition.
 
 ---
 
-## API-Led Connectivity refresher
+## 1. Rule reference (the 23 rules at a glance — 21 automated by `audit_raml.py`; `REUSE-002` and `SPEC-004` reviewed by Claude)
 
-Three layers, three intents:
+Severity weight in the score formula (§5.6): BLOCKER −15, MAJOR −5, MINOR −2, INFO 0.
+GO requires score ≥ 80 **and** zero blockers (§6).
 
-| Layer | Prefix | Purpose | Examples |
+### Naming (`NAMING-*`)
+
+| ID | Sev | Check | Quick fix |
 |---|---|---|---|
-| **System** | `s-` | Direct, entity-shaped access to a system of record | `s-orders-api`, `s-customers-api`, `s-payments-api` |
-| **Process** | `p-` | Composes multiple System APIs into business capabilities | `p-order-fulfillment-api`, `p-customer-onboarding-api` |
-| **Experience** | `x-` | Tailored payloads for a specific channel | `x-mobile-orders-api`, `x-partner-portal-api` |
+| `NAMING-001` | MAJOR | Resources are kebab-case | `/customerOrders` → `/customer-orders` |
+| `NAMING-002` | MAJOR | Resource collections are plural nouns | `/customer` → `/customers` (skip singletons under `/{id}/...`) |
+| `NAMING-003` | MINOR | Query parameters are camelCase | `?sort_by=` → `?sortBy=` |
+| `NAMING-004` | MAJOR | Title follows `s-/p-/x-` convention | `customerOrderAPI` → `s-customer-orders-api` |
 
-A well-named API tells you the layer in 2 seconds. A poorly-named one forces you to read the resource list.
+### API-Led Connectivity (`APIC-*`)
+
+| ID | Sev | Check | Quick fix |
+|---|---|---|---|
+| `APIC-001` | BLOCKER | Experience API does not reference DB-like resources | Remove `/sql-*`, `/db-*`, `/query`; route through a System API |
+| `APIC-002` | MAJOR | System API does not contain orchestration verbs | Move `/process-*`, `/calculate-*` to a Process API; expose nouns instead |
+| `APIC-003` | INFO | Title carries the layer prefix | Same fix as `NAMING-004` |
+
+### Reuse (`REUSE-*`)
+
+| ID | Sev | Check | Quick fix |
+|---|---|---|---|
+| `REUSE-001` | MAJOR | Pagination is a `trait`, not duplicated | Extract `pageable` trait, apply via `is: [ pageable ]` |
+| `REUSE-002` | MAJOR | Error schemas are extracted, not duplicated | Move to `dataTypes/ErrorResponse.raml` and reference |
+| `REUSE-003` | MINOR | Common security at root via `securedBy:` | `securedBy: [ oauth_2_0 ]` at root |
+
+### Spec (`SPEC-*`)
+
+| ID | Sev | Check | Quick fix |
+|---|---|---|---|
+| `SPEC-001` | MAJOR | Every request body has an `example` | Add inline `example:` or `!include examples/foo.json` |
+| `SPEC-002` | MAJOR | Every response body has an `example` per status | Same — one example per `(status, mediaType)` |
+| `SPEC-003` | BLOCKER | Every method declares 400, 401, 404, 500 | Apply a `standardErrors` trait via `is:` on every method |
+| `SPEC-004` | MINOR | Inline schemas > 20 lines move to `dataTypes/` | Extract to `dataTypes/Foo.raml`; reference by name |
+
+### Security (`SEC-*`)
+
+| ID | Sev | Check | Quick fix |
+|---|---|---|---|
+| `SEC-001` | BLOCKER | `securitySchemes` declared **and** root `securedBy:` set | Declare OAuth 2.0; `securedBy: [ oauth_2_0 ]` at root |
+| `SEC-002` | MAJOR | Sensitive endpoints have explicit `securedBy:` | Add per-method scope: `securedBy: [ oauth_2_0: { scopes: [ users:credentials:write ] } ]` |
+| `SEC-003` | INFO | OAuth 2.0 is preferred over Basic | Replace Basic with OAuth 2.0 |
+
+Tokens that mark an endpoint as sensitive: `payment`, `auth`, `user`, `password`, `credential`, `token`, `secret`. Match is on the path string, case-insensitive.
+
+### Versioning (`VER-*`)
+
+| ID | Sev | Check | Quick fix |
+|---|---|---|---|
+| `VER-001` | BLOCKER | `version:` field at root | `version: v1` |
+| `VER-002` | MAJOR | `{version}` interpolated in `baseUri` | `baseUri: https://api.x.com/foo/{version}` |
+| `VER-003` | INFO | Use `vN`, not `vN.M.P`, in URI | `version: v1.2.3` → `version: v1` (patch belongs in changelog) |
+
+### Documentation (`DOC-*`)
+
+| ID | Sev | Check | Quick fix |
+|---|---|---|---|
+| `DOC-001` | MAJOR | Root `description:` ≥ 50 chars | Rewrite as a 2–3 sentence purpose statement |
+| `DOC-002` | MINOR | Every resource has a `description:` | One-liner per resource |
+| `DOC-003` | INFO | Root `documentation:` section exists | Add Overview, Getting started, Error model |
 
 ---
 
-## Naming (`NAMING-*`)
+## 2. Layer decision tree
 
-| ID | Severity | Rule |
+When `NAMING-004` and `APIC-002` push back on the spec, the auditor needs to recommend a layer. Walk this tree:
+
+```
+Does the spec wrap a single back-end system or DB?
+├── Yes → it is a SYSTEM API
+│         title: s-{system}-{entity}-api
+│         resources: nouns only, no orchestration verbs
+│         consumers: Process APIs (server-to-server)
+│
+└── No, it composes 2+ APIs / coordinates a workflow?
+    ├── Yes → it is a PROCESS API
+    │         title: p-{capability}-api
+    │         resources: still nouns, but verbs in the *capability* are OK
+    │                   (e.g. /payment-instructions, /order-fulfilments)
+    │         consumers: Experience APIs
+    │
+    └── No, it serves a specific UI / channel?
+        └── EXPERIENCE API
+            title: x-{channel}-{capability}-api
+            resources: shaped to channel needs (mobile, web, partner)
+            consumers: client apps; never another API
+```
+
+**Heuristics for ambiguous cases:**
+
+- `/payment-process` in a noun-style spec → either rename to `/payments` (System) or extract to a Process API. Never both.
+- A spec that mixes `/customers`, `/orders`, `/users` *and* `/process-payment` *and* `/calculate-total` is almost certainly a Process API forced into a System API skin. Recommend extraction.
+- Single-channel projection of multiple back-ends with channel-specific shapes (e.g. mobile-friendly compact payloads) → Experience API.
+
+---
+
+## 3. Verb → layer mapping
+
+When the auditor sees a verb-shaped path segment, this is the routing table:
+
+| Verb stem in segment | Layer it belongs to | Notes |
 |---|---|---|
-| `NAMING-001` | MAJOR | Resources MUST use kebab-case (`/customer-orders`, never `/customerOrders`). |
-| `NAMING-002` | MAJOR | Resource names MUST be plural nouns (`/customers`, never `/customer` or `/getCustomer`). |
-| `NAMING-003` | MINOR | Query parameters MUST use camelCase (`?sortBy=date`, never `?sort_by=date`). |
-| `NAMING-004` | MAJOR | API title MUST follow `s-{system}-{entity}-api`, `p-{capability}-api`, or `x-{channel}-{capability}-api`. |
+| `process-`, `-process` | Process | `/payment-process`, `/order-process` |
+| `calculate-`, `compute-` | Process | Computation across multiple back-ends |
+| `orchestrate-`, `coordinate-` | Process | Self-evident |
+| `validate-and-`, `submit-and-` | Process | Compound operations |
+| `execute-` | Process | Command-style endpoints |
+| `search-` (with cross-system semantics) | Process | Federated search |
+| `get-`, `fetch-`, `list-` | **None — remove the verb** | HTTP method already conveys this; rename to the noun |
+| `create-`, `update-`, `delete-` | **None — remove the verb** | Same; HTTP method conveys it |
 
-**Tip:** If you find yourself wanting a verb in a resource name, you're probably writing the wrong layer. See `APIC-002`.
+The orchestration-verb list above mirrors the `ORCHESTRATION_VERBS` constant in `scripts/audit_raml.py`. When extending one, extend the other.
 
 ---
 
-## API-Led Connectivity (`APIC-*`)
+## 4. Remediation palette (most-asked snippets)
 
-| ID | Severity | Rule |
+### OAuth 2.0 + scoped securedBy (fixes `SEC-001` + `SEC-002`)
+
+```yaml
+securitySchemes:
+  oauth_2_0:
+    type: OAuth 2.0
+    describedBy:
+      headers:
+        Authorization:
+          type: string
+    settings:
+      authorizationUri: https://auth.example.com/oauth/authorize
+      accessTokenUri:   https://auth.example.com/oauth/token
+      authorizationGrants: [ authorization_code, client_credentials ]
+      scopes:
+        - "orders:read"
+        - "orders:write"
+        - "users:read"
+        - "users:credentials:write"
+
+securedBy: [ oauth_2_0 ]
+
+# Per-method scope on a sensitive endpoint:
+/users/{userId}/password:
+  put:
+    securedBy:
+      - oauth_2_0: { scopes: [ "users:credentials:write" ] }
+```
+
+### Standard error trait (fixes `SPEC-003` + pre-empts `REUSE-002`)
+
+```yaml
+traits:
+  standardErrors:
+    responses:
+      400: { body: { application/json: { type: ErrorResponse } } }
+      401: { body: { application/json: { type: ErrorResponse } } }
+      403: { body: { application/json: { type: ErrorResponse } } }
+      404: { body: { application/json: { type: ErrorResponse } } }
+      429: { body: { application/json: { type: ErrorResponse } } }
+      500: { body: { application/json: { type: ErrorResponse } } }
+
+# Apply on every method:
+/customer-orders:
+  get:
+    is: [ standardErrors ]
+```
+
+The analyzer at `scripts/audit_raml.py` follows `is:` clauses when computing the union of declared response codes — applying the trait satisfies `SPEC-003` even if the method's inline `responses:` block does not list 400/401/404/500.
+
+### Pagination trait (fixes `REUSE-001`)
+
+```yaml
+traits:
+  pageable:
+    queryParameters:
+      page:
+        type: integer
+        default: 1
+        minimum: 1
+      pageSize:
+        type: integer
+        default: 25
+        minimum: 1
+        maximum: 100
+
+/customer-orders:
+  get:
+    is: [ pageable, standardErrors ]
+```
+
+### URI versioning (fixes `VER-002` + `VER-003`)
+
+```yaml
+version: v1
+baseUri: https://api.example.com/customer-orders/{version}
+```
+
+Patch and minor levels (`v1.2.3`) live in the changelog, response headers, or Anypoint Exchange listing — never in the URI.
+
+### ErrorResponse data type (supports `REUSE-002` + `SPEC-002`)
+
+```yaml
+# dataTypes/ErrorResponse.raml
+#%RAML 1.0 DataType
+type: object
+additionalProperties: false
+properties:
+  code:
+    type: string
+    enum: [ VALIDATION_ERROR, UNAUTHENTICATED, FORBIDDEN, NOT_FOUND,
+            CONFLICT, RATE_LIMITED, INTERNAL_ERROR ]
+  message:    { type: string, minLength: 1, maxLength: 500 }
+  traceId:    { type: string, pattern: "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$" }
+  timestamp:  { type: datetime }
+```
+
+---
+
+## 5. Severity calibration guidance
+
+The rules above carry a default severity. The auditor MAY adjust within a single step if the maturity context warrants it (§1):
+
+| Maturity | Severity adjustment |
+|---|---|
+| v0 PoC, internal only | INFO and MINOR may be silenced (still listed, but flagged as "non-blocking for PoC") |
+| v1 candidate, pre-production | Default severities apply |
+| Production deployment | MAJORs may be promoted to BLOCKERs if they affect security or contract stability |
+
+**Never** lower a BLOCKER below MAJOR. **Never** silence `SEC-001`, `SEC-002`, `SPEC-003`, `VER-001`, or `APIC-001` regardless of maturity. These guard the contract and the trust boundary.
+
+---
+
+## 6. Score interpretation guide
+
+| Score band | Verdict | Typical meaning |
 |---|---|---|
-| `APIC-001` | BLOCKER | Experience APIs MUST NOT reference DB-like resources (`/sql-query`, `/db-table`). |
-| `APIC-002` | MAJOR | System APIs MUST NOT contain orchestration verbs (`/process-order`, `/calculate-total`). |
-| `APIC-003` | INFO | API titles SHOULD start with `s-`, `p-`, or `x-` for instant identification. |
+| 100 | GO | Spec passes every rule. Rare; usually means trait/library reuse is mature. |
+| 80–99 | GO | Production-ready with cosmetic refinements. Ship and iterate. |
+| 60–79 | NO-GO | Foundations are sound; remediation is mechanical. ~½ to 1 person-day. |
+| 30–59 | NO-GO | Multiple structural issues. Re-architect before ship; expect 1–3 person-days. |
+| 0–29 | NO-GO | Either a PoC mislabelled as a production candidate, or a layer mismatch. Re-discuss layer intent before remediation. |
 
-**Layer test:** Read your resource list aloud. If it sounds like nouns ("orders", "customers"), you're in System or Experience. If it sounds like verbs ("approve", "calculate"), you're in Process. Mixed = problem.
-
----
-
-## Reuse (`REUSE-*`)
-
-| ID | Severity | Rule |
-|---|---|---|
-| `REUSE-001` | MAJOR | Pagination on 2+ resources MUST be defined as a `trait` and applied via `is:`. |
-| `REUSE-002` | MAJOR | Duplicated error response schemas MUST be extracted to a shared library or trait. |
-| `REUSE-003` | MINOR | Common security schemes SHOULD be declared at the root via `securedBy:`. |
-
-**Rule of thumb:** If you copy-paste the same YAML block twice, it's a trait waiting to happen.
+A BLOCKER caps the score at 85 by arithmetic (100 − 15). Two BLOCKERs cap it at 70. The §6 anti-pattern *"score above 80 with any BLOCKER present"* is therefore mathematically impossible — listed in the spec as a guard against tampering with the score formula, not as a bound the auditor needs to enforce.
 
 ---
 
-## Spec quality (`SPEC-*`)
+## 7. When this cheat sheet is wrong
 
-| ID | Severity | Rule |
-|---|---|---|
-| `SPEC-001` | MAJOR | Every request body MUST have at least one `example`. |
-| `SPEC-002` | MAJOR | Every response body MUST have at least one `example` per status code. |
-| `SPEC-003` | BLOCKER | Every endpoint MUST document at least `400`, `401`, `404`, `500`. |
-| `SPEC-004` | MINOR | Inline JSON schemas longer than 20 lines SHOULD be moved to `dataTypes/` files. |
-
-**Why examples matter:** The Anypoint API Designer mocking service uses them to return realistic payloads. Without examples, your consumers cannot test integrations before your implementation is live.
-
----
-
-## Security (`SEC-*`)
-
-| ID | Severity | Rule |
-|---|---|---|
-| `SEC-001` | BLOCKER | No `securitySchemes` declared and no `securedBy:` at root → API is fully open. |
-| `SEC-002` | MAJOR | Sensitive endpoints (POST/PUT/DELETE on `payment`, `auth`, `user`, `password`) MUST have explicit `securedBy:`. |
-| `SEC-003` | INFO | OAuth 2.0 SHOULD be preferred over basic auth for production APIs. |
-
-**Anti-pattern:** Relying on Anypoint API Manager policies to enforce security that the RAML doesn't declare. The contract is the source of truth for consumers — the policy layer is enforcement, not specification.
-
----
-
-## Versioning (`VER-*`)
-
-| ID | Severity | Rule |
-|---|---|---|
-| `VER-001` | BLOCKER | No `version:` field at root. |
-| `VER-002` | MAJOR | The `version:` MUST appear in the `baseUri` (`https://api.example.com/{version}/...`). |
-| `VER-003` | INFO | Use semantic major versions (`v1`, `v2`) — avoid `v1.0.3` in the public URI. |
-
-**Why patch versions don't belong in URIs:** A patch by definition is non-breaking. If consumers don't need to migrate, the URI shouldn't change. Track patches via API Manager or Exchange asset versions.
-
----
-
-## Documentation (`DOC-*`)
-
-| ID | Severity | Rule |
-|---|---|---|
-| `DOC-001` | MAJOR | Root `description:` MUST be at least 50 characters. |
-| `DOC-002` | MINOR | Resources without a `description:` field. |
-| `DOC-003` | INFO | No `documentation:` section with usage examples or onboarding guide. |
-
-**The 30-second test:** A new developer lands on your Exchange portal. Can they understand what your API does, who should use it, and how to make their first call — without reading the operations one by one?
-
----
-
-## Severity scoring
-
-Audit findings are weighted to compute the production-readiness score:
-
-| Severity | Weight | Meaning |
-|---|---|---|
-| BLOCKER | -15 | Must be fixed before deployment. Auto-NO-GO regardless of total score. |
-| MAJOR | -5 | Should be fixed before deployment. Affects governance, security, or maintainability. |
-| MINOR | -2 | Should be fixed soon. Affects readability or consistency. |
-| INFO | 0 | Recommendation. No score impact, but worth considering. |
-
-Score starts at 100, floor at 0. A score ≥ 85 with no BLOCKERs is the bar for production readiness.
-
----
-
-## Verdict thresholds
-
-| Score | BLOCKERs | Verdict |
-|---|---|---|
-| ≥ 85 | 0 | ✅ GO |
-| 70–84 | 0 | ⚠️ GO-WITH-RESERVATIONS |
-| < 70 | 0 | 🛑 NO-GO |
-| any | ≥ 1 | 🛑 NO-GO (forced) |
-
----
-
-## See also
-
-- [`SKILL.md`](../SKILL.md) — full skill manifest with audit posture and workflow.
-- [`CHANGELOG.md`](../CHANGELOG.md) — version history.
-- [Anypoint API Governance](https://docs.mulesoft.com/api-governance/) — MuleSoft's native ruleset enforcement (Enterprise Edition integration).
-- [API Design Patterns](https://www.manning.com/books/api-design-patterns) by JJ Geewax — the canonical reference behind several `SPEC-*` and `REUSE-*` rules.
+If a rule in this file disagrees with `SKILL.md` §2, **§2 wins**. This file is regenerated when §2 changes; if you find a drift, file it as a CHANGELOG entry under the next minor version and update both in the same commit.

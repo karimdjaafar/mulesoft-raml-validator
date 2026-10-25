@@ -1,0 +1,95 @@
+#%RAML 1.0
+title: Leave Management API
+version: v1.0.3
+baseUri: https://api.demo.jasmineconseil.com/leaves
+mediaType: application/json
+description: |
+  Employee leave management. Employees submit leave requests (paid, sick or
+  unpaid) and follow their status; managers approve them; everyone can check
+  the remaining leave balance of an employee.
+
+types:
+  LeaveRequest:
+    type: object
+    properties:
+      requestId:  string
+      employeeId: string
+      type:
+        enum: [ PAID, SICK, UNPAID ]
+      startDate:  date-only
+      endDate:    date-only
+      status:
+        enum: [ DRAFT, SUBMITTED, APPROVED, REJECTED ]
+
+/leaveRequests:
+  get:
+    description: List leave requests.
+    queryParameters:
+      page:      { type: integer, default: 1 }
+      page_size: { type: integer, default: 25 }
+      status:    { type: string, required: false }
+    responses:
+      200:
+        body:
+          application/json:
+            type: LeaveRequest[]
+  post:
+    description: Submit a leave request.
+    body:
+      application/json:
+        type: LeaveRequest
+    responses:
+      201:
+        body:
+          application/json:
+            type: LeaveRequest
+            example:
+              requestId: LR-2026-0042
+              employeeId: EMP-0007
+              type: PAID
+              startDate: 2026-12-21
+              endDate: 2026-12-31
+              status: SUBMITTED
+      400:
+        body:
+          application/json:
+            example: { code: VALIDATION_ERROR, message: "endDate before startDate" }
+  /{requestId}:
+    get:
+      responses:
+        200:
+          body:
+            application/json:
+              type: LeaveRequest
+        404:
+          body:
+            application/json:
+              example: { code: NOT_FOUND, message: "Leave request not found" }
+    /approve:
+      post:
+        description: Approve a submitted leave request.
+        responses:
+          200:
+            body:
+              application/json:
+                type: LeaveRequest
+
+/employee:
+  /{employeeId}/balance:
+    get:
+      queryParameters:
+        page:      { type: integer, default: 1 }
+        page_size: { type: integer, default: 25 }
+      responses:
+        200:
+          body:
+            application/json:
+              example: { employeeId: EMP-0007, paidDaysLeft: 12, sickDaysLeft: 5 }
+
+/users/{userId}/password:
+  put:
+    body:
+      application/json:
+        example: { newPassword: "********" }
+    responses:
+      204:

@@ -1,0 +1,138 @@
+{
+  "title": "RAML Audit Report \u2014 customerOrderAPI",
+  "subtitle": "MuleSoft RAML 1.0 production-readiness audit",
+  "spec_path": "examples/customerOrderAPI.raml",
+  "date": "2026-05-06",
+  "skill_version": "mulesoft-raml-validator v1.3.0",
+  "score": 21,
+  "verdict": "NO-GO",
+  "findings": [
+    {
+      "rule": "SEC-001",
+      "severity": "BLOCKER",
+      "location": "root",
+      "summary": "No securitySchemes and no root securedBy: \u2014 API is fully open.",
+      "impact": "Any client can call any endpoint. Hard fail for any non-public API.",
+      "remediation_code": "securitySchemes:\n  oauth_2_0:\n    type: OAuth 2.0\n    settings:\n      authorizationUri: https://auth.example.com/oauth/authorize\n      accessTokenUri: https://auth.example.com/oauth/token\n      authorizationGrants: [ authorization_code, client_credentials ]\n\nsecuredBy: [ oauth_2_0 ]"
+    },
+    {
+      "rule": "SPEC-003",
+      "severity": "BLOCKER",
+      "location": "GET /customerOrders (missing [400, 401, 404, 500]); POST /customerOrders (missing [400, 401, 404, 500]); GET /customerOrders/{orderId} (missing [400, 401, 404, 500]) (+3 more)",
+      "summary": "6 methods do not declare the full required error set (400/401/404/500).",
+      "impact": "Consumers have no contract for failure modes. Code generation, mocking, and MUnit are all impacted.",
+      "remediation_code": "traits:\n  standardErrors:\n    responses:\n      400: { body: { application/json: { type: ErrorResponse } } }\n      401: { body: { application/json: { type: ErrorResponse } } }\n      404: { body: { application/json: { type: ErrorResponse } } }\n      500: { body: { application/json: { type: ErrorResponse } } }"
+    },
+    {
+      "rule": "APIC-002",
+      "severity": "MAJOR",
+      "location": "/payment-process",
+      "summary": "Orchestration verb in resource path ('payment-process') \u2014 belongs to a Process API, not a System API.",
+      "impact": "Mixing nouns with orchestration verbs in the same spec means the API layer is undeclared and violates Single Responsibility per layer.",
+      "remediation_text": "Either expose the entity as a noun (System API) or extract this resource into a separate Process API."
+    },
+    {
+      "rule": "DOC-001",
+      "severity": "MAJOR",
+      "location": "description",
+      "summary": "Root description is 15 characters (minimum 50).",
+      "impact": "Anypoint Exchange listing will be uninformative; downstream developers cannot determine fit-for-purpose.",
+      "remediation_code": "description: |\n  System API exposing customer orders and user account operations\n  for the retail platform. Backed by the OMS and IAM service.\n  Consumed by the Order Management Process API."
+    },
+    {
+      "rule": "NAMING-001",
+      "severity": "MAJOR",
+      "location": "/customerOrders",
+      "summary": "Resource segment 'customerOrders' is not kebab-case.",
+      "impact": "Inconsistent URL ergonomics and against MuleSoft naming guidance.",
+      "remediation_code": "# rename to kebab-case, e.g.\n# /customerOrders  \u2192  /customer-orders"
+    },
+    {
+      "rule": "NAMING-004",
+      "severity": "MAJOR",
+      "location": "title",
+      "summary": "Title 'customerOrderAPI' does not follow the s-/p-/x- layer convention.",
+      "impact": "API-Led catalogs sort and filter by layer prefix; this API will not be discoverable as System / Process / Experience in Anypoint Exchange.",
+      "remediation_code": "title: s-customer-orders-api    # System layer\n# or\ntitle: p-order-management-api  # Process layer\n# or\ntitle: x-web-orders-api        # Experience layer"
+    },
+    {
+      "rule": "REUSE-001",
+      "severity": "MAJOR",
+      "location": "GET /customerOrders, GET /users",
+      "summary": "Pagination duplicated on 2 resources without a trait.",
+      "impact": "Future pagination changes (defaults, max page size, link headers) require editing every resource.",
+      "remediation_code": "traits:\n  pageable:\n    queryParameters:\n      page:     { type: integer, default: 1, minimum: 1 }\n      pageSize: { type: integer, default: 25, minimum: 1, maximum: 100 }\n\n/customer-orders:\n  get:\n    is: [ pageable ]"
+    },
+    {
+      "rule": "SEC-002",
+      "severity": "MAJOR",
+      "location": "POST /payment-process; PUT /users/{userId}/password",
+      "summary": "2 sensitive endpoint(s) lack an explicit securedBy: with a narrow scope.",
+      "impact": "Sensitive routes (payment, auth, password, credentials) should declare a method-specific scope, not inherit the root scope.",
+      "remediation_code": "/users/{userId}/password:\n  put:\n    securedBy:\n      - oauth_2_0: { scopes: [ \"users:credentials:write\" ] }"
+    },
+    {
+      "rule": "SPEC-001",
+      "severity": "MAJOR",
+      "location": "POST /customerOrders (application/json); POST /payment-process (application/json); PUT /users/{userId}/password (application/json)",
+      "summary": "3 request bodies have no inline example.",
+      "impact": "Mocking Service, API Designer 'Try it', and consumer SDK generators all rely on `example`.",
+      "remediation_code": "post:\n  body:\n    application/json:\n      type: CustomerOrderRequest\n      example:\n        customerId: \"CUST-00042\"\n        items: [ { sku: \"SKU-001\", quantity: 2 } ]"
+    },
+    {
+      "rule": "SPEC-002",
+      "severity": "MAJOR",
+      "location": "GET /customerOrders \u2192 200 (application/json); POST /customerOrders \u2192 201 (application/json); GET /customerOrders/{orderId} \u2192 200 (application/json); POST /payment-process \u2192 200 (application/json); GET /users \u2192 200 (application/json) (+1 more)",
+      "summary": "6 response bodies have no inline example per status code.",
+      "impact": "Consumers cannot stub or mock against the contract."
+    },
+    {
+      "rule": "VER-002",
+      "severity": "MAJOR",
+      "location": "baseUri",
+      "summary": "{version} placeholder is not interpolated in baseUri.",
+      "impact": "Consumers cannot pin to a major version via the URL; parallel rollout (v1 \u2192 v2) is impossible.",
+      "remediation_code": "baseUri: https://api.example.com/customer-orders/{version}"
+    },
+    {
+      "rule": "DOC-002",
+      "severity": "MINOR",
+      "location": "/customerOrders; /customerOrders/{orderId}; /payment-process; /users; /users/{userId}/password",
+      "summary": "5 resources have no description: field.",
+      "remediation_text": "Add a one-line description on every resource."
+    },
+    {
+      "rule": "NAMING-003",
+      "severity": "MINOR",
+      "location": "GET /customerOrders?sort_by",
+      "summary": "Query parameter 'sort_by' is not camelCase.",
+      "remediation_code": "queryParameters:\n  sortBy:\n    type: string"
+    },
+    {
+      "rule": "APIC-003",
+      "severity": "INFO",
+      "location": "title",
+      "summary": "Title should start with the layer prefix (s-/p-/x-) for instant identification."
+    },
+    {
+      "rule": "DOC-003",
+      "severity": "INFO",
+      "location": "root",
+      "summary": "No documentation: section with onboarding guide.",
+      "remediation_code": "documentation:\n  - title: Overview\n    content: |\n      This API exposes ...\n  - title: Getting started\n    content: !include docs/getting-started.md"
+    },
+    {
+      "rule": "SEC-003",
+      "severity": "INFO",
+      "location": "n/a",
+      "summary": "Once authentication is added, prefer OAuth 2.0 over basic auth."
+    },
+    {
+      "rule": "VER-003",
+      "severity": "INFO",
+      "location": "version: v1.2.3",
+      "summary": "Use semantic versioning (v1, v2) in the URI; reserve patch/minor for the changelog.",
+      "remediation_code": "version: v1   # patch level v1.2.3 belongs in changelogs/headers"
+    }
+  ]
+}

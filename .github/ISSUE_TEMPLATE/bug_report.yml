@@ -1,0 +1,25 @@
+name: Bug report
+description: A script fails, a report is wrong, or the install check does not pass.
+labels: [bug]
+body:
+  - type: input
+    id: version
+    attributes:
+      label: Skill version
+      description: First lines of SKILL.md, or the output of verify_install.py
+      placeholder: "1.4.2"
+    validations:
+      required: true
+  - type: textarea
+    id: what
+    attributes:
+      label: What happened
+      description: Command run, full output, and what you expected instead.
+    validations:
+      required: true
+  - type: textarea
+    id: raml
+    attributes:
+      label: Minimal RAML to reproduce
+      description: Remove anything confidential (hosts, client names, credentials).
+      render: yaml

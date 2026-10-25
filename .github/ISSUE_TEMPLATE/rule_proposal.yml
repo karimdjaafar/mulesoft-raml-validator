@@ -1,0 +1,21 @@
+name: Rule proposal / improvement
+description: Suggest a new audit rule or an improvement to the reports or the generator.
+labels: [enhancement]
+body:
+  - type: textarea
+    id: idea
+    attributes:
+      label: Proposal
+      description: What should the skill check or do, and why does it matter in production?
+    validations:
+      required: true
+  - type: dropdown
+    id: severity
+    attributes:
+      label: Suggested severity
+      options: [BLOCKER, MAJOR, MINOR, INFO, Not a rule]
+  - type: textarea
+    id: example
+    attributes:
+      label: Example (bad and good RAML)
+      render: yaml

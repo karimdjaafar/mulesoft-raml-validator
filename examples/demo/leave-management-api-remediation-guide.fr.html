@@ -1,0 +1,688 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Guide de remédiation — s-leave-management-api</title>
+  <style>
+    :root {
+      /* Same palette as the audit report (v1.3) */
+      --header-blue:    #E97132;
+      --footer-navy:    #0E2841;
+      --row-stripe:     #fdf4ef;
+      --row-divider:    #f0dccf;
+      --text-primary:   #0E2841;
+      --text-secondary: #5a6b78;
+      --text-muted:     #8a98a3;
+
+      /* Transformation kinds — borrowed from severity palette but remapped */
+      --mechanical:    #1f8a4c;       /* green — high confidence */
+      --mechanical-bg: #e1f5ea;
+      --mechanical-br: #7cc197;
+
+      --heuristic:    #f08c1a;       /* orange — needs review */
+      --heuristic-bg: #fff1dc;
+      --heuristic-br: #f3b463;
+
+      --architectural:    #1f6dd6;   /* blue — alternative choice possible */
+      --architectural-bg: #e3eefb;
+      --architectural-br: #87aee6;
+
+      --review-flag: #d8253b;
+    }
+
+    * { box-sizing: border-box; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+                   "Helvetica Neue", Arial, sans-serif;
+      color: var(--text-primary);
+      background: #ffffff;
+      margin: 0; padding: 32px 40px; line-height: 1.45;
+    }
+    .container { max-width: 1180px; margin: 0 auto; }
+
+    h1.report-title { font-size: 28px; font-weight: 700; margin: 0 0 4px 0; }
+    .report-subtitle { font-size: 14px; color: var(--text-secondary); margin: 0 0 24px 0; }
+
+    .meta-row {
+      display: flex; gap: 24px; flex-wrap: wrap;
+      font-size: 13px; color: var(--text-secondary);
+      margin-bottom: 32px; padding-bottom: 16px;
+      border-bottom: 1px solid var(--row-divider);
+    }
+    .meta-row strong { color: var(--text-primary); font-weight: 600; }
+
+    h2.section-title { font-size: 22px; font-weight: 700; margin: 36px 0 4px 0; }
+    .section-sub { font-size: 14px; color: var(--text-secondary); margin: 0 0 18px 0; }
+
+    /* Summary table */
+    table.summary {
+      width: 100%; border-collapse: separate; border-spacing: 0;
+      border-radius: 8px; overflow: hidden;
+      box-shadow: 0 1px 3px rgba(15,58,82,0.08);
+    }
+    table.summary thead th {
+      background: var(--header-blue); color: #fff;
+      font-weight: 600; text-align: left;
+      padding: 16px 20px; font-size: 13px; letter-spacing: 0.02em;
+    }
+    table.summary thead th.num-col { text-align: center; }
+    table.summary tbody td {
+      padding: 14px 20px;
+      border-bottom: 1px solid var(--row-divider);
+      font-size: 14px; vertical-align: middle;
+    }
+    table.summary tbody tr:nth-child(even) td { background: var(--row-stripe); }
+    table.summary tbody tr:last-child td { border-bottom: none; }
+    table.summary .num-cell { text-align: center; }
+
+    /* Kind pills */
+    .pill {
+      display: inline-flex; align-items: center; justify-content: center;
+      min-width: 28px; height: 26px; padding: 0 12px;
+      border-radius: 999px; font-weight: 700; font-size: 12px;
+      border: 1.5px solid transparent; letter-spacing: 0.02em;
+    }
+    .pill.kind-mechanical    { background: var(--mechanical-bg);    color: var(--mechanical);    border-color: var(--mechanical-br); }
+    .pill.kind-heuristic     { background: var(--heuristic-bg);     color: var(--heuristic);     border-color: var(--heuristic-br); }
+    .pill.kind-architectural { background: var(--architectural-bg); color: var(--architectural); border-color: var(--architectural-br); }
+
+    /* Totals strip — solid pills on navy */
+    tfoot.totals tr td {
+      background: var(--footer-navy); color: #fff;
+      padding: 16px 20px; font-size: 15px; font-weight: 700;
+    }
+    tfoot.totals .total-pill {
+      display: inline-flex; align-items: center; justify-content: center;
+      min-width: 44px; height: 30px; padding: 0 14px;
+      border-radius: 999px; font-weight: 700; font-size: 15px; color: #fff;
+    }
+    .total-mechanical    { background: var(--mechanical); }
+    .total-heuristic     { background: var(--heuristic); }
+    .total-architectural { background: var(--architectural); }
+
+    /* Layer banner */
+    .layer-banner {
+      margin-top: 20px; padding: 14px 18px;
+      background: var(--row-stripe);
+      border-left: 4px solid var(--header-blue);
+      border-radius: 4px;
+      font-size: 14px;
+    }
+    .layer-banner strong { font-family: monospace; color: var(--header-blue); }
+
+    /* Review flag callout */
+    .review-callout {
+      margin-top: 16px; padding: 14px 18px;
+      background: #fef4f6;
+      border-left: 4px solid var(--review-flag);
+      border-radius: 4px;
+      font-size: 14px;
+    }
+    .review-callout strong { color: var(--review-flag); }
+
+    /* Transformation cards */
+    .transformation {
+      border: 1px solid var(--row-divider);
+      border-left: 4px solid var(--text-muted);
+      border-radius: 6px;
+      padding: 16px 20px;
+      margin: 14px 0;
+      background: #fff;
+    }
+    .transformation.mechanical    { border-left-color: var(--mechanical); }
+    .transformation.heuristic     { border-left-color: var(--heuristic); }
+    .transformation.architectural { border-left-color: var(--architectural); }
+
+    .transformation-head {
+      display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
+      margin-bottom: 12px;
+    }
+    .transformation-rule {
+      font-family: "SFMono-Regular", Consolas, Monaco, monospace;
+      font-size: 12px; font-weight: 600;
+      background: #eef2f5; padding: 2px 8px; border-radius: 4px;
+    }
+    .confidence-tag {
+      font-size: 12px; color: var(--text-muted);
+      font-weight: 500;
+    }
+    .confidence-tag.low { color: var(--review-flag); font-weight: 600; }
+
+    /* Before/after diff */
+    .diff {
+      display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin: 8px 0;
+    }
+    .diff-side {
+      padding: 10px 12px;
+      border: 1px solid var(--row-divider);
+      border-radius: 4px;
+      font-family: "SFMono-Regular", Consolas, Monaco, monospace;
+      font-size: 12px;
+      white-space: pre-wrap; word-break: break-word;
+      background: #f5f8fa;
+    }
+    .diff-side.before { border-left: 3px solid var(--review-flag); }
+    .diff-side.after  { border-left: 3px solid var(--mechanical); }
+    .diff-label {
+      display: block; font-family: -apple-system, sans-serif;
+      font-size: 11px; font-weight: 600; color: var(--text-muted);
+      letter-spacing: 0.05em; text-transform: uppercase;
+      margin-bottom: 4px;
+    }
+
+    .reasoning {
+      font-size: 13px; margin-top: 12px; color: var(--text-primary);
+    }
+    .reasoning strong { color: var(--text-primary); }
+
+    .review-flag {
+      margin-top: 12px; padding: 10px 14px;
+      background: #fef4f6;
+      border-radius: 4px;
+      font-size: 12px;
+      color: var(--text-primary);
+    }
+
+    footer.page-footer {
+      margin-top: 48px; padding-top: 16px;
+      border-top: 1px solid var(--row-divider);
+      font-size: 12px; color: var(--text-muted);
+      display: flex; justify-content: space-between; flex-wrap: wrap; gap: 16px;
+    }
+    /* Jasmine Conseil charter (v1.4.2) */
+    body { font-family: Calibri, "Segoe UI", -apple-system, BlinkMacSystemFont, Roboto, Arial, sans-serif; }
+    .jc-brand {
+      display: flex; align-items: center; justify-content: space-between;
+      margin: -32px -40px 28px -40px; padding: 18px 40px 14px 40px;
+      border-top: 8px solid #E97132;
+      background: linear-gradient(90deg, #fdf0e8 0%, #ffffff 70%);
+      border-bottom: 1px solid var(--row-divider);
+    }
+    .jc-logo { display: flex; align-items: center; gap: 12px; }
+    .rv-logo { flex: none; display: block; }
+    .rv-name { font-size: 22px; font-weight: 700; color: #0E2841; line-height: 1.1; }
+    .rv-sub { font-size: 12px; color: var(--text-secondary); letter-spacing: .3px; }
+    .jc-tag { font-size: 12px; color: var(--text-secondary); }
+    .api-card { border: 1px solid var(--row-divider); border-left: 4px solid #E97132; border-radius: 8px; padding: 18px 22px; background: #fffaf7; }
+    .api-head { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+    .api-title { font-size: 18px; font-weight: 700; color: #0E2841; }
+    .api-pill { font-size: 12px; font-weight: 700; padding: 2px 10px; border-radius: 999px; background: #0E2841; color: #fff; }
+    .api-pill.layer { background: #fdebe0; color: #b4531c; }
+    .api-desc { margin: 10px 0 14px 0; color: var(--text-secondary); font-size: 14px; }
+    .api-facts { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 8px 24px; margin: 0 0 14px 0; }
+    .api-facts dt { font-size: 11px; text-transform: uppercase; letter-spacing: .6px; color: var(--text-muted); }
+    .api-facts dd { margin: 2px 0 0 0; font-size: 14px; word-break: break-word; }
+    table.api-ops { width: 100%; border-collapse: collapse; font-size: 13px; }
+    table.api-ops th { text-align: left; font-size: 11px; text-transform: uppercase; letter-spacing: .6px; color: var(--text-muted); border-bottom: 1px solid var(--row-divider); padding: 6px 8px; }
+    table.api-ops td { border-bottom: 1px solid var(--row-divider); padding: 6px 8px; vertical-align: top; }
+    .api-verb { font-family: "SFMono-Regular", Consolas, monospace; font-weight: 700; color: #E97132; }
+    .rv-links a { color: #0E2841; text-decoration: none; border-bottom: 1px solid #E97132; }
+    .jc-word { font-weight: 700; color: #E97132; font-size: 15px; }
+    .jc-word span { color: #0E2841; font-size: 10px; letter-spacing: 2px; margin-left: 3px; }
+    h1.report-title { color: #0E2841; }
+    h2.section-title { color: #0E2841; border-left: 4px solid #E97132; padding-left: 10px; }
+  </style>
+</head>
+<body>
+<div class="container">
+
+  <div class="jc-brand">
+    <div class="jc-logo"><img class="rv-logo" width="44" height="44" alt="RAML Validator logo" src="data:image/png;base64,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">
+      <div><div class="rv-name">RAML Validator</div><div class="rv-sub">pour MuleSoft &middot; connectivité API-Led</div></div>
+    </div>
+    <div class="jc-tag">mulesoft-raml-validator v1.4.2 &middot; par <span class="jc-word">Jasmine<span>CONSEIL</span></span></div>
+  </div>
+
+  <h1 class="report-title">Guide de remédiation — s-leave-management-api</h1>
+  <p class="report-subtitle">Guide de remédiation personnalisé</p>
+
+  <div class="meta-row">
+    <span><strong>Source :</strong> leave-management-api.raml</span>
+    <span><strong>Version corrigée :</strong> leave-management-api-best-practices.raml</span>
+    <span><strong>Généré le :</strong> 2026-10-25</span>
+    <span><strong>Skill :</strong> mulesoft-raml-validator v1.4.2</span>
+  </div>
+
+  <h2 class="section-title">API auditée</h2>
+  <p class="section-sub">Telle que déclarée dans la spécification (description traduite).</p>
+  <div class="api-card">
+    <div class="api-head">
+      <span class="api-title">Leave Management API</span>
+<span class="api-pill">v1.0.3</span>      <span class="api-pill layer">Couche non déclarée</span>
+    </div>
+    <p class="api-desc">Gestion des congés des employés. Les employés déposent leurs demandes de congé (payé, maladie ou sans solde) et en suivent le statut ; les managers les approuvent ; chacun peut consulter le solde de congés restant d'un employé.</p>
+    <dl class="api-facts">
+      <div><dt>Base URI</dt><dd>https://api.demo.jasmineconseil.com/leaves</dd></div>
+      <div><dt>Ressources</dt><dd>6</dd></div>
+      <div><dt>Opérations</dt><dd>6 (3 GET, 2 POST, 1 PUT)</dd></div>
+      <div><dt>Sécurité</dt><dd>aucune déclarée</dd></div>
+    </dl>
+  </div>
+
+  <h2 class="section-title">Transformations appliquées</h2>
+  <p class="section-sub">
+    15 transformations réparties en 3 catégories.
+    Audit initial : <strong>16 constats, score 26/100</strong>.
+    Score attendu après correction : <strong>100/100</strong>.
+  </p>
+
+  <table class="summary">
+    <thead>
+      <tr>
+        <th>Type</th>
+        <th>Description</th>
+        <th class="num-col">Nombre</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><span class="pill kind-mechanical">MÉCANIQUE</span></td>
+        <td>Corrections déterministes et sûres (renommages, mise en forme, insertions structurelles).</td>
+        <td class="num-cell">9</td>
+      </tr>
+      <tr>
+        <td><span class="pill kind-heuristic">HEURISTIQUE</span></td>
+        <td>Valeurs par défaut adaptées au contexte, à relire (exemples provisoires, descriptions générées, URI par défaut).</td>
+        <td class="num-cell">6</td>
+      </tr>
+      <tr>
+        <td><span class="pill kind-architectural">ARCHITECTURALE</span></td>
+        <td>Choix structurants de couche ou de nommage, pour lesquels plusieurs réponses sont valables.</td>
+        <td class="num-cell">0</td>
+      </tr>
+    </tbody>
+    <tfoot class="totals">
+      <tr>
+        <td colspan="2">Totaux</td>
+        <td class="num-cell">
+          <span class="total-pill total-mechanical">9</span>
+          <span class="total-pill total-heuristic">6</span>
+          <span class="total-pill total-architectural">0</span>
+        </td>
+      </tr>
+    </tfoot>
+  </table>
+
+  <div class="layer-banner">
+    Couche API déduite : <strong>s-</strong> &mdash; Couche System (s-) par défaut pour une spécification orientée ressources ; envisager p- ou x- si l'API orchestre ou sert un canal précis.
+  </div>
+
+  <div class="review-callout">
+    <strong>6 transformations
+    à relire</strong>
+    (choix heuristiques ou architecturaux, ou résultats de confiance faible).
+    Chacune est signalée ci-dessous.
+  </div>
+
+  <h2 class="section-title">Transformations détaillées</h2>
+  <p class="section-sub">Dans l'ordre d'application. Chaque carte montre l'avant / après, la justification et les points à relire.</p>
+
+  <div class="transformation mechanical">
+    <div class="transformation-head">
+      <span class="pill kind-mechanical">MÉCANIQUE</span>
+      <span class="transformation-rule">NAMING-001</span>
+      <span class="confidence-tag ">
+        confiance : élevée
+      </span>
+    </div>
+
+    <div class="diff">
+      <div class="diff-side before">
+        <span class="diff-label">Avant</span>/leaveRequests
+      </div>
+      <div class="diff-side after">
+        <span class="diff-label">Après</span>/leave-requests
+      </div>
+    </div>
+
+    <div class="reasoning"><strong>Justification :</strong> Les chemins de ressources doivent être en kebab-case (minuscules, séparées par des tirets).</div>
+
+  </div>
+  <div class="transformation mechanical">
+    <div class="transformation-head">
+      <span class="pill kind-mechanical">MÉCANIQUE</span>
+      <span class="transformation-rule">NAMING-002</span>
+      <span class="confidence-tag ">
+        confiance : élevée
+      </span>
+    </div>
+
+    <div class="diff">
+      <div class="diff-side before">
+        <span class="diff-label">Avant</span>/employee
+      </div>
+      <div class="diff-side after">
+        <span class="diff-label">Après</span>/employees
+      </div>
+    </div>
+
+    <div class="reasoning"><strong>Justification :</strong> Les ressources de collection doivent être des noms au pluriel.</div>
+
+  </div>
+  <div class="transformation mechanical">
+    <div class="transformation-head">
+      <span class="pill kind-mechanical">MÉCANIQUE</span>
+      <span class="transformation-rule">NAMING-003</span>
+      <span class="confidence-tag ">
+        confiance : élevée
+      </span>
+    </div>
+
+    <div class="diff">
+      <div class="diff-side before">
+        <span class="diff-label">Avant</span>GET /leave-requests?page_size
+      </div>
+      <div class="diff-side after">
+        <span class="diff-label">Après</span>GET /leave-requests?pageSize
+      </div>
+    </div>
+
+    <div class="reasoning"><strong>Justification :</strong> Les paramètres de requête doivent être en camelCase.</div>
+
+  </div>
+  <div class="transformation mechanical">
+    <div class="transformation-head">
+      <span class="pill kind-mechanical">MÉCANIQUE</span>
+      <span class="transformation-rule">NAMING-003</span>
+      <span class="confidence-tag ">
+        confiance : élevée
+      </span>
+    </div>
+
+    <div class="diff">
+      <div class="diff-side before">
+        <span class="diff-label">Avant</span>GET /employees/{employeeId}/balance?page_size
+      </div>
+      <div class="diff-side after">
+        <span class="diff-label">Après</span>GET /employees/{employeeId}/balance?pageSize
+      </div>
+    </div>
+
+    <div class="reasoning"><strong>Justification :</strong> Les paramètres de requête doivent être en camelCase.</div>
+
+  </div>
+  <div class="transformation heuristic">
+    <div class="transformation-head">
+      <span class="pill kind-heuristic">HEURISTIQUE</span>
+      <span class="transformation-rule">NAMING-004</span>
+      <span class="confidence-tag ">
+        confiance : moyenne
+      </span>
+    </div>
+
+    <div class="diff">
+      <div class="diff-side before">
+        <span class="diff-label">Avant</span>title: Leave Management API
+      </div>
+      <div class="diff-side after">
+        <span class="diff-label">Après</span>title: s-leave-management-api
+      </div>
+    </div>
+
+    <div class="reasoning"><strong>Justification :</strong> Couche déduite : « s- ». Couche System (s-) par défaut pour une spécification orientée ressources ; envisager p- ou x- si l'API orchestre ou sert un canal précis.</div>
+
+    <div class="review-flag">
+      🔍 <strong>À relire.</strong> La valeur appliquée est générique ;
+      remplacez-la par un contenu métier avant la production.
+    </div>
+  </div>
+  <div class="transformation mechanical">
+    <div class="transformation-head">
+      <span class="pill kind-mechanical">MÉCANIQUE</span>
+      <span class="transformation-rule">VER-002</span>
+      <span class="confidence-tag ">
+        confiance : élevée
+      </span>
+    </div>
+
+    <div class="diff">
+      <div class="diff-side before">
+        <span class="diff-label">Avant</span>baseUri: https://api.demo.jasmineconseil.com/leaves
+      </div>
+      <div class="diff-side after">
+        <span class="diff-label">Après</span>baseUri: https://api.demo.jasmineconseil.com/leaves/{version}
+      </div>
+    </div>
+
+    <div class="reasoning"><strong>Justification :</strong> Variable {version} insérée dans baseUri pour que les consommateurs figent une version majeure par l'URL.</div>
+
+  </div>
+  <div class="transformation mechanical">
+    <div class="transformation-head">
+      <span class="pill kind-mechanical">MÉCANIQUE</span>
+      <span class="transformation-rule">VER-003</span>
+      <span class="confidence-tag ">
+        confiance : élevée
+      </span>
+    </div>
+
+    <div class="diff">
+      <div class="diff-side before">
+        <span class="diff-label">Avant</span>version: v1.0.3
+      </div>
+      <div class="diff-side after">
+        <span class="diff-label">Après</span>version: v1
+      </div>
+    </div>
+
+    <div class="reasoning"><strong>Justification :</strong> Version de l'URI ramenée au niveau majeur ; mineur et correctif vont dans le changelog et les en-têtes, pas dans l'URL.</div>
+
+  </div>
+  <div class="transformation mechanical">
+    <div class="transformation-head">
+      <span class="pill kind-mechanical">MÉCANIQUE</span>
+      <span class="transformation-rule">DOC-002</span>
+      <span class="confidence-tag ">
+        confiance : élevée
+      </span>
+    </div>
+
+    <div class="diff">
+      <div class="diff-side before">
+        <span class="diff-label">Avant</span>6 resources without description
+      </div>
+      <div class="diff-side after">
+        <span class="diff-label">Après</span>all 6 resources now have a one-line description
+      </div>
+    </div>
+
+    <div class="reasoning"><strong>Justification :</strong> Descriptions générées : à réécrire avec le sens métier de chaque ressource.</div>
+
+  </div>
+  <div class="transformation heuristic">
+    <div class="transformation-head">
+      <span class="pill kind-heuristic">HEURISTIQUE</span>
+      <span class="transformation-rule">DOC-003</span>
+      <span class="confidence-tag ">
+        confiance : moyenne
+      </span>
+    </div>
+
+    <div class="diff">
+      <div class="diff-side before">
+        <span class="diff-label">Avant</span>(no documentation section)
+      </div>
+      <div class="diff-side after">
+        <span class="diff-label">Après</span>documentation: [Overview, Getting started, Error model]
+      </div>
+    </div>
+
+    <div class="reasoning"><strong>Justification :</strong> Section documentation ajoutée avec trois chapitres types : à compléter avec le contenu métier.</div>
+
+    <div class="review-flag">
+      🔍 <strong>À relire.</strong> La valeur appliquée est générique ;
+      remplacez-la par un contenu métier avant la production.
+    </div>
+  </div>
+  <div class="transformation heuristic">
+    <div class="transformation-head">
+      <span class="pill kind-heuristic">HEURISTIQUE</span>
+      <span class="transformation-rule">SEC-001</span>
+      <span class="confidence-tag ">
+        confiance : moyenne
+      </span>
+    </div>
+
+    <div class="diff">
+      <div class="diff-side before">
+        <span class="diff-label">Avant</span>(no securitySchemes, no root securedBy)
+      </div>
+      <div class="diff-side after">
+        <span class="diff-label">Après</span>OAuth 2.0 scheme + root securedBy: [ oauth_2_0 ]
+      </div>
+    </div>
+
+    <div class="reasoning"><strong>Justification :</strong> OAuth 2.0 ajouté avec des URI d'autorisation et de jeton provisoires : à remplacer par celles du fournisseur d'identité avant déploiement.</div>
+
+    <div class="review-flag">
+      🔍 <strong>À relire.</strong> La valeur appliquée est générique ;
+      remplacez-la par un contenu métier avant la production.
+    </div>
+  </div>
+  <div class="transformation mechanical">
+    <div class="transformation-head">
+      <span class="pill kind-mechanical">MÉCANIQUE</span>
+      <span class="transformation-rule">SPEC-003</span>
+      <span class="confidence-tag ">
+        confiance : élevée
+      </span>
+    </div>
+
+    <div class="diff">
+      <div class="diff-side before">
+        <span class="diff-label">Avant</span>No 4xx/5xx responses defined on any endpoint
+      </div>
+      <div class="diff-side after">
+        <span class="diff-label">Après</span>standardErrors trait defined and applied to 6 methods
+      </div>
+    </div>
+
+    <div class="reasoning"><strong>Justification :</strong> Un trait unique définit 400/401/403/404/429/500 : chaque méthode a un contrat d'erreur complet.</div>
+
+  </div>
+  <div class="transformation mechanical">
+    <div class="transformation-head">
+      <span class="pill kind-mechanical">MÉCANIQUE</span>
+      <span class="transformation-rule">REUSE-001</span>
+      <span class="confidence-tag ">
+        confiance : élevée
+      </span>
+    </div>
+
+    <div class="diff">
+      <div class="diff-side before">
+        <span class="diff-label">Avant</span>2 GET methods with inline page/pageSize
+      </div>
+      <div class="diff-side after">
+        <span class="diff-label">Après</span>pageable trait defined and applied to 2 methods
+      </div>
+    </div>
+
+    <div class="reasoning"><strong>Justification :</strong> Paramètres de pagination regroupés dans un trait réutilisable : tout changement de valeur par défaut ou de limite s'applique partout.</div>
+
+  </div>
+  <div class="transformation heuristic">
+    <div class="transformation-head">
+      <span class="pill kind-heuristic">HEURISTIQUE</span>
+      <span class="transformation-rule">SPEC-001</span>
+      <span class="confidence-tag low">
+        confiance : faible — à relire
+      </span>
+    </div>
+
+    <div class="diff">
+      <div class="diff-side before">
+        <span class="diff-label">Avant</span>1 request bodies without example
+      </div>
+      <div class="diff-side after">
+        <span class="diff-label">Après</span>placeholder examples added to 1 request bodies
+      </div>
+    </div>
+
+    <div class="reasoning"><strong>Justification :</strong> Exemples génériques ajoutés : à remplacer par des valeurs métier réalistes pour rendre le Mocking Service utile.</div>
+
+    <div class="review-flag">
+      🔍 <strong>À relire.</strong> La valeur appliquée est générique ;
+      remplacez-la par un contenu métier avant la production.
+    </div>
+  </div>
+  <div class="transformation heuristic">
+    <div class="transformation-head">
+      <span class="pill kind-heuristic">HEURISTIQUE</span>
+      <span class="transformation-rule">SPEC-002</span>
+      <span class="confidence-tag low">
+        confiance : faible — à relire
+      </span>
+    </div>
+
+    <div class="diff">
+      <div class="diff-side before">
+        <span class="diff-label">Avant</span>3 response bodies without example
+      </div>
+      <div class="diff-side after">
+        <span class="diff-label">Après</span>placeholder examples added to 3 response bodies
+      </div>
+    </div>
+
+    <div class="reasoning"><strong>Justification :</strong> Exemples génériques ajoutés : à remplacer par des valeurs métier réalistes.</div>
+
+    <div class="review-flag">
+      🔍 <strong>À relire.</strong> La valeur appliquée est générique ;
+      remplacez-la par un contenu métier avant la production.
+    </div>
+  </div>
+  <div class="transformation heuristic">
+    <div class="transformation-head">
+      <span class="pill kind-heuristic">HEURISTIQUE</span>
+      <span class="transformation-rule">SEC-002</span>
+      <span class="confidence-tag ">
+        confiance : moyenne
+      </span>
+    </div>
+
+    <div class="diff">
+      <div class="diff-side before">
+        <span class="diff-label">Avant</span>1 sensitive endpoints with no per-method securedBy
+      </div>
+      <div class="diff-side after">
+        <span class="diff-label">Après</span>PUT /users/{userId}/password → scope 'users:credentials:write'
+      </div>
+    </div>
+
+    <div class="reasoning"><strong>Justification :</strong> securedBy ajouté sur chaque point d'accès sensible, avec un scope étroit déduit du chemin : vérifier qu'il existe dans le fournisseur d'identité.</div>
+
+    <div class="review-flag">
+      🔍 <strong>À relire.</strong> La valeur appliquée est générique ;
+      remplacez-la par un contenu métier avant la production.
+    </div>
+  </div>
+
+  <h2 class="section-title">Prochaines étapes</h2>
+  <ol>
+    <li><strong>Relire le RAML corrigé</strong> (leave-management-api-best-practices.raml).
+En particulier les
+        6 transformations
+        signalées ci-dessus.</li>
+    <li><strong>Remplacer les valeurs provisoires.</strong> Les descriptions générées
+        (DOC-001/002/003), les URI d'authentification (SEC-001) et les exemples
+        (SPEC-001/002) respectent les règles mais n'ont aucun sens métier.</li>
+    <li><strong>Vérifier les noms de scopes</strong> si SEC-002 a été appliquée :
+        le générateur les déduit du chemin ; ils doivent exister dans votre
+        fournisseur d'identité.</li>
+    <li><strong>Refaire l'audit du RAML corrigé</strong> pour confirmer 100/100 GO.
+        Tout autre résultat est un bug à signaler.</li>
+    <li><strong>Enregistrer les deux fichiers ensemble</strong> — le RAML corrigé et
+        ce guide, qui sert de journal des modifications.</li>
+  </ol>
+
+  <footer class="page-footer">
+    <span>Généré par mulesoft-raml-validator v1.4.2</span>
+    <span>2026-10-25</span>
+    <span class="rv-links"><a href="https://github.com/karimdjaafar/mulesoft-raml-validator" target="_blank" rel="noopener">Projet</a> &middot; <a href="https://github.com/karimdjaafar/mulesoft-raml-validator/blob/main/docs/DEVELOPER-GUIDE.md" target="_blank" rel="noopener">Guide développeur</a> &middot; <a href="https://github.com/karimdjaafar/mulesoft-raml-validator/issues/new/choose" target="_blank" rel="noopener">Retours</a> &middot; Contact : <a href="mailto:kdjaafar@jasmineconseil.com?subject=RAML%20Validator" target="_blank" rel="noopener">kdjaafar@jasmineconseil.com</a></span>
+    <span style="color:#E97132">&copy; 2026 Jasmine Conseil</span>
+  </footer>
+
+</div>
+</body>
+</html>

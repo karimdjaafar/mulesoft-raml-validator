@@ -1,0 +1,97 @@
+#%RAML 1.0
+title: s-customer-orders-api
+version: v1
+baseUri: https://api.jasmine-conseil.com/customer-orders/{version}
+mediaType: application/json
+
+description: |
+  System API exposing customer orders for the Jasmine Conseil retail platform.
+  Backed by the Order Management System. Consumed by the Order Management
+  Process API. Single-file demonstration spec used as the canonical GO-verdict
+  fixture for the mulesoft-raml-validator skill smoke tests.
+
+documentation:
+  - title: Overview
+    content: |
+      System API exposing customer orders. Single-file demonstration spec.
+  - title: Getting started
+    content: |
+      Request OAuth 2.0 client credentials and call endpoints with
+      Authorization: Bearer <token>.
+
+securitySchemes:
+  oauth_2_0:
+    type: OAuth 2.0
+    describedBy:
+      headers:
+        Authorization:
+          type: string
+    settings:
+      authorizationUri: https://auth.jasmine-conseil.com/oauth/authorize
+      accessTokenUri: https://auth.jasmine-conseil.com/oauth/token
+      authorizationGrants: [ authorization_code, client_credentials ]
+      scopes: [ "orders:read", "orders:write" ]
+
+securedBy: [ oauth_2_0 ]
+
+types:
+  ErrorResponse:
+    type: object
+    properties:
+      code:        { type: string, example: VALIDATION_ERROR }
+      message:     { type: string, example: "Field 'customerId' is required" }
+      traceId:     { type: string, example: "8c7e1f6a-3d2b-4c5e-9a1b-7f3d4c5e9a1b" }
+
+  CustomerOrder:
+    type: object
+    properties:
+      orderId:    { type: string, example: ORD-2026-000123 }
+      customerId: { type: string, example: CUST-00042 }
+      status:     { type: string, example: CREATED }
+
+traits:
+  pageable:
+    queryParameters:
+      page:     { type: integer, default: 1, minimum: 1 }
+      pageSize: { type: integer, default: 25, minimum: 1, maximum: 100 }
+  standardErrors:
+    responses:
+      400: { body: { application/json: { type: ErrorResponse, example: { code: VALIDATION_ERROR, message: "bad request", traceId: "x" } } } }
+      401: { body: { application/json: { type: ErrorResponse, example: { code: UNAUTHENTICATED, message: "missing token", traceId: "x" } } } }
+      403: { body: { application/json: { type: ErrorResponse, example: { code: FORBIDDEN, message: "scope denied", traceId: "x" } } } }
+      404: { body: { application/json: { type: ErrorResponse, example: { code: NOT_FOUND, message: "not found", traceId: "x" } } } }
+      500: { body: { application/json: { type: ErrorResponse, example: { code: INTERNAL_ERROR, message: "server error", traceId: "x" } } } }
+
+/customer-orders:
+  description: Collection of customer purchase orders.
+  get:
+    description: List customer orders with pagination.
+    is: [ pageable, standardErrors ]
+    responses:
+      200:
+        body:
+          application/json:
+            type: CustomerOrder[]
+            example:
+              - orderId: ORD-2026-000123
+                customerId: CUST-00042
+                status: CREATED
+  post:
+    description: Create a new customer order.
+    is: [ standardErrors ]
+    body:
+      application/json:
+        type: CustomerOrder
+        example:
+          orderId: ORD-2026-000124
+          customerId: CUST-00042
+          status: CREATED
+    responses:
+      201:
+        body:
+          application/json:
+            type: CustomerOrder
+            example:
+              orderId: ORD-2026-000124
+              customerId: CUST-00042
+              status: CREATED

@@ -1,0 +1,10 @@
+{
+  "title": "RAML Audit Report \u2014 s-customer-orders-api",
+  "subtitle": "MuleSoft RAML 1.0 production-readiness audit",
+  "spec_path": "examples/s-customer-orders-api.raml",
+  "date": "2026-05-06",
+  "skill_version": "mulesoft-raml-validator v1.3.0",
+  "score": 100,
+  "verdict": "GO",
+  "findings": []
+}

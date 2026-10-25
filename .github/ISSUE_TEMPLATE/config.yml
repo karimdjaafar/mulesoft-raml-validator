@@ -1,0 +1,5 @@
+blank_issues_enabled: true
+contact_links:
+  - name: Contact the maintainer
+    url: mailto:kdjaafar@jasmineconseil.com
+    about: Enterprise Edition, partnerships, or anything that is not a public issue.

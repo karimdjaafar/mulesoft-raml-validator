@@ -10,7 +10,7 @@ make every effort to acknowledge your contribution.
 
 Instead, report them privately via one of the following channels:
 
-- **Email:** [security@jasmineconseil.com](mailto:security@jasmineconseil.com)
+- **Email:** [kdjaafar@jasmineconseil.com](mailto:kdjaafar@jasmineconseil.com)
 - **GitHub Security Advisories:** use the
   [private reporting feature](https://docs.github.com/en/code-security/security-advisories/guidance-on-reporting-and-writing/privately-reporting-a-security-vulnerability)
   on this repository.
@@ -128,7 +128,7 @@ fixes. As of this writing, that is:
 | < 1.0 | ❌ — pre-release |
 
 If you are pinned to an older version for a legitimate reason, please reach
-out at [security@jasmineconseil.com](mailto:security@jasmineconseil.com) and
+out at [kdjaafar@jasmineconseil.com](mailto:kdjaafar@jasmineconseil.com) and
 we'll discuss extended support options.
 
 ---
@@ -153,7 +153,7 @@ and may result in legal action.
 ## Security updates
 
 Security advisories will be published as
-[GitHub Security Advisories](https://github.com/karim-djaafar/mulesoft-raml-validator/security/advisories)
+[GitHub Security Advisories](https://github.com/karimdjaafar/mulesoft-raml-validator/security/advisories)
 on this repository. To stay informed:
 
 - **Watch** the repository on GitHub (Watch → Custom → Security alerts).
@@ -176,8 +176,8 @@ be the first — see "Reporting a vulnerability" above.*
 
 ## Contact
 
-- **Security issues:** [security@jasmineconseil.com](mailto:security@jasmineconseil.com)
-- **General inquiries:** [contact@jasmineconseil.com](mailto:contact@jasmineconseil.com)
+- **Security issues:** [kdjaafar@jasmineconseil.com](mailto:kdjaafar@jasmineconseil.com)
+- **General inquiries:** [kdjaafar@jasmineconseil.com](mailto:kdjaafar@jasmineconseil.com)
 - **Enterprise support:** through your Jasmine Conseil account manager
 
 Last updated: 2026-05-04

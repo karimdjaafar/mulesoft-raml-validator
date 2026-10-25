@@ -1,0 +1,5 @@
+"""Single source of the skill version — every script imports it from here."""
+SKILL_NAME = "mulesoft-raml-validator"
+VERSION = "1.4.2"
+RELEASED = "2026-10-25"
+SKILL_VERSION = f"{SKILL_NAME} v{VERSION}"
