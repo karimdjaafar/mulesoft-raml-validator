@@ -127,10 +127,9 @@ skill, `mulesoft-raml-validator`:
 ```
 mulesoft-raml-validator/                 # repository = plugin
 ├── .claude-plugin/plugin.json           # plugin manifest (name, version, author, licence)
-├── bin/raml-validator(.cmd)             # the raml-validator command (put this folder on PATH)
 ├── skills/mulesoft-raml-validator/      # the skill
 │   ├── SKILL.md                         # instructions for Claude (rules, workflow, output contract)
-│   ├── bin/raml-validator(.cmd)         # launchers used by the skill (macOS, Linux / Windows)
+│   ├── bin/raml-validator(.cmd)         # the raml-validator command — put this folder on your PATH
 │   ├── completions/                     # zsh, bash and PowerShell tab completion
 │   ├── scripts/                         # raml_validator.py (the command), audit_raml.py, render_report.py,
 │   │                                    # generate_best_practices.py, render_remediation_guide.py,

@@ -29,7 +29,6 @@ jobs:
         run: |
           echo "${{ github.workspace }}/skills/mulesoft-raml-validator/bin" >> "$GITHUB_PATH"
           bin/raml-validator --version
-          ../../bin/raml-validator --version
       - name: 2. Automatic installation and install check
         run: |
           raml-validator verify

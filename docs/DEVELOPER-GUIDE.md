@@ -14,8 +14,10 @@ a report, or cut a release. To *use* the skill, read the [README](../README.md).
 ## 1. Architecture
 
 **Layout.** The repository is a Claude plugin: `.claude-plugin/plugin.json` at
-the root, the skill in `skills/mulesoft-raml-validator/`, and `bin/` at the root
-with thin launchers that call the skill's own `bin/`. **Paths in this guide are
+the root and the skill in `skills/mulesoft-raml-validator/`, which carries the
+command launchers in its own `bin/`. There is deliberately **no `bin/` at the
+repository root**: the directory refuses to list a plugin with a top-level
+`bin/` in Cowork and the Claude apps. **Paths in this guide are
 relative to the skill folder** unless they start with the repository root
 (`docs/`, `.claude-plugin/`, `.github/`).
 

@@ -60,8 +60,8 @@ whole organization.
 
 ```powershell
 git clone https://github.com/karimdjaafar/mulesoft-raml-validator.git $HOME\tools\mulesoft-raml-validator
-& $HOME\tools\mulesoft-raml-validator\bin\raml-validator.cmd setup
-[Environment]::SetEnvironmentVariable("Path", "$HOME\tools\mulesoft-raml-validator\bin;" + [Environment]::GetEnvironmentVariable("Path", "User"), "User")
+& $HOME\tools\mulesoft-raml-validator\skills\mulesoft-raml-validator\bin\raml-validator.cmd setup
+[Environment]::SetEnvironmentVariable("Path", "$HOME\tools\mulesoft-raml-validator\skills\mulesoft-raml-validator\bin;" + [Environment]::GetEnvironmentVariable("Path", "User"), "User")
 Add-Content $PROFILE 'raml-validator completion powershell | Out-String | Invoke-Expression'
 ```
 
@@ -86,13 +86,13 @@ Start a new Claude Code session so the skill is loaded.
 
 ### Command line (macOS, Linux), without Claude
 
-Clone the repository, prepare its Python environment, put `bin/` on your
+Clone the repository, prepare its Python environment, put the skill's `bin/` folder on your
 `PATH` and turn on tab completion. For **zsh** (default shell on macOS):
 
 ```bash
 git clone https://github.com/karimdjaafar/mulesoft-raml-validator.git ~/tools/mulesoft-raml-validator
-~/tools/mulesoft-raml-validator/bin/raml-validator setup
-echo 'export PATH="$HOME/tools/mulesoft-raml-validator/bin:$PATH"' >> ~/.zshrc
+~/tools/mulesoft-raml-validator/skills/mulesoft-raml-validator/bin/raml-validator setup
+echo 'export PATH="$HOME/tools/mulesoft-raml-validator/skills/mulesoft-raml-validator/bin:$PATH"' >> ~/.zshrc
 echo 'autoload -Uz compinit && compinit' >> ~/.zshrc
 echo 'eval "$(raml-validator completion zsh)"' >> ~/.zshrc
 source ~/.zshrc

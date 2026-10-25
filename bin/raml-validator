@@ -1,5 +1,0 @@
-#!/bin/sh
-# raml-validator (macOS, Linux): runs the command shipped with the skill,
-# skills/mulesoft-raml-validator/bin/raml-validator. Put this folder on your PATH.
-DIR=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)
-exec "$DIR/../skills/mulesoft-raml-validator/bin/raml-validator" "$@"

@@ -16,8 +16,9 @@ project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - **The repository is a Claude plugin**, `jasmine-raml-validator` ("RAML
   Validator by Jasmine Conseil"): `.claude-plugin/plugin.json` at the root, the
   skill moved to `skills/mulesoft-raml-validator/` (SKILL.md, scripts,
-  templates, references, examples, completions, launchers), thin launchers in
-  the root `bin/`. The command keeps its name, `raml-validator`.
+  templates, references, examples, completions, launchers). No `bin/` at the
+  repository root, so the plugin can be listed in Claude Code, Cowork and the
+  Claude apps. The command keeps its name, `raml-validator`.
   `verify_install.py` checks that `plugin.json` carries the skill's version.
 - README "Data handling" states the only network access: the one-time download
   of PyYAML and Jinja2 from PyPI.
