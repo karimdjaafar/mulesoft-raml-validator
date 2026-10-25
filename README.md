@@ -10,6 +10,8 @@
 |---|---|---|---|---|
 | README — mulesoft-raml-validator | 1.5.0 | 2026-10-25 | Karim DJAAFAR — Jasmine Conseil | Released |
 
+> **For the MuleSoft community**: generate a quality report on your RAML APIs.
+>
 > A Claude skill that audits MuleSoft RAML 1.0 API specifications for production
 > readiness — naming, API-Led Connectivity layering, reuse, examples, security,
 > versioning and documentation — and can generate a corrected "best-practices"
